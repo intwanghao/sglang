@@ -121,6 +121,13 @@ mma(const typename ScalarType<scalar_t>::FragA& a_frag,
     //    "{%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, {%10,%11,%12,%13};\n"
     //    : "=f"(c[0]), "=f"(c[1]), "=f"(c[2]), "=f"(c[3])
     //    : "r"(a[0]), "r"(a[1]), "r"(a[2]), "r"(a[3]), "r"(b[0]), "r"(b[1]), "f"(c[0]), "f"(c[1]), "f"(c[2]), "f"(c[3]));
+      volatile void* d_mat_frag_ct1[4] = {&c[0], &c[1], &c[2], &c[3]};
+      sycl::vec<uint32_t, 4> a_mat_frag_ct1(a[0], a[1], a[2], a[3]);
+      sycl::vec<uint32_t, 2> b_mat_frag_ct1(b[0], b[1]);
+      sycl::vec<float, 4> c_mat_frag_ct1(c[0], c[1], c[2], c[3]);
+      dpct::experimental::matrix::mma<16, 8, 16, sycl::ext::oneapi::bfloat16, float>(
+          reinterpret_cast<volatile void**>(d_mat_frag_ct1), &a_mat_frag_ct1, &b_mat_frag_ct1, &c_mat_frag_ct1);
+
   } else {
     STATIC_ASSERT_SCALAR_TYPE_VALID(scalar_t);
   }
@@ -163,6 +170,13 @@ inline void mma_trans(
     //      "f"(c[1]),
     //      "f"(c[2]),
     //      "f"(c[3]));
+      volatile void* d_mat_frag_ct1[4] = {&c[0], &c[1], &c[2], &c[3]};
+      sycl::vec<uint32_t, 4> a_mat_frag_ct1(b[0], b2[0], b[1], b2[1]);
+      sycl::vec<uint32_t, 2> b_mat_frag_ct1(a[0], a[1]);
+      sycl::vec<float, 4> c_mat_frag_ct1(c[0], c[1], c[2], c[3]);
+      dpct::experimental::matrix::mma<16, 8, 16, sycl::ext::oneapi::bfloat16, float>(
+          reinterpret_cast<volatile void**>(d_mat_frag_ct1), &a_mat_frag_ct1, &b_mat_frag_ct1, &c_mat_frag_ct1);
+
   } else {
     STATIC_ASSERT_SCALAR_TYPE_VALID(scalar_t);
   }

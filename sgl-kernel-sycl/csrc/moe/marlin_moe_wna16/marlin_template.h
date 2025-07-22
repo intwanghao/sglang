@@ -116,11 +116,11 @@ mma(const typename ScalarType<scalar_t>::FragA& a_frag,
     /*
     DPCT1053:5: Migration of device assembly code is not supported.
     */
-    asm volatile(
-        "mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32 "
-        "{%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, {%10,%11,%12,%13};\n"
-        : "=f"(c[0]), "=f"(c[1]), "=f"(c[2]), "=f"(c[3])
-        : "r"(a[0]), "r"(a[1]), "r"(a[2]), "r"(a[3]), "r"(b[0]), "r"(b[1]), "f"(c[0]), "f"(c[1]), "f"(c[2]), "f"(c[3]));
+    //asm volatile(
+    //    "mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32 "
+    //    "{%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, {%10,%11,%12,%13};\n"
+    //    : "=f"(c[0]), "=f"(c[1]), "=f"(c[2]), "=f"(c[3])
+    //    : "r"(a[0]), "r"(a[1]), "r"(a[2]), "r"(a[3]), "r"(b[0]), "r"(b[1]), "f"(c[0]), "f"(c[1]), "f"(c[2]), "f"(c[3]));
   } else {
     STATIC_ASSERT_SCALAR_TYPE_VALID(scalar_t);
   }
@@ -149,20 +149,20 @@ inline void mma_trans(
     /*
     DPCT1053:6: Migration of device assembly code is not supported.
     */
-    asm volatile(
-        "mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32 "
-        "{%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, {%10,%11,%12,%13};\n"
-        : "=f"(c[0]), "=f"(c[1]), "=f"(c[2]), "=f"(c[3])
-        : "r"(b[0]),
-          "r"(b2[0]),
-          "r"(b[1]),
-          "r"(b2[1]),
-          "r"(a[0]),
-          "r"(a[1]),
-          "f"(c[0]),
-          "f"(c[1]),
-          "f"(c[2]),
-          "f"(c[3]));
+    //asm volatile(
+    //    "mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32 "
+    //    "{%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, {%10,%11,%12,%13};\n"
+    //    : "=f"(c[0]), "=f"(c[1]), "=f"(c[2]), "=f"(c[3])
+    //    : "r"(b[0]),
+    //      "r"(b2[0]),
+    //      "r"(b[1]),
+    //      "r"(b2[1]),
+    //      "r"(a[0]),
+    //      "r"(a[1]),
+    //      "f"(c[0]),
+    //      "f"(c[1]),
+    //      "f"(c[2]),
+    //      "f"(c[3]));
   } else {
     STATIC_ASSERT_SCALAR_TYPE_VALID(scalar_t);
   }
@@ -173,7 +173,8 @@ inline void mma_trans(
 template <int count, typename scalar_t>
 inline void ldsm(typename ScalarType<scalar_t>::FragA& frag_a, const void* smem_ptr) {
   uint32_t* a = reinterpret_cast<uint32_t*>(&frag_a);
-  uint32_t smem = static_cast<uint32_t>(__cvta_generic_to_shared(smem_ptr));
+  //uint32_t smem = static_cast<uint32_t>(__cvta_generic_to_shared(smem_ptr));
+  auto smem = smem_ptr;
   if constexpr (count == 4) {
     dpct::experimental::matrix::ldmatrix((uintptr_t)smem, &a[0], &a[1], &a[2], &a[3]);
   } else if constexpr (count == 2) {
@@ -327,12 +328,14 @@ scale(typename ScalarType<scalar_t>::FragB& frag_b, typename ScalarType<scalar_t
   DPCT1064:745: Migrated __hmul2 call is used in a macro/template definition and may not be valid for all macro/template
   uses. Adjust the code.
   */
-  frag_b[0] = sycl::ext::intel::math::hmul2(frag_b[0], s);
+  //frag_b[0] = sycl::ext::intel::math::hmul2(frag_b[0], s);
+  frag_b[0] = frag_b[0] * s;
   /*
   DPCT1064:746: Migrated __hmul2 call is used in a macro/template definition and may not be valid for all macro/template
   uses. Adjust the code.
   */
-  frag_b[1] = sycl::ext::intel::math::hmul2(frag_b[1], s);
+  //frag_b[1] = sycl::ext::intel::math::hmul2(frag_b[1], s);
+  frag_b[1] = frag_b[1] * s;
 }
 
 template <typename scalar_t>
@@ -348,7 +351,8 @@ inline void scale_and_sub(typename ScalarType<scalar_t>::FragB& frag_b, scalar_t
   DPCT1064:808: Migrated __hfma2 call is used in a macro/template definition and may not be valid for all macro/template
   uses. Adjust the code.
   */
-  frag_b[0] = sycl::ext::intel::math::hfma2(frag_b[0], s2, sycl::ext::intel::math::hneg2(zp2));
+  //frag_b[0] = sycl::ext::intel::math::hfma2(frag_b[0], s2, sycl::ext::intel::math::hneg2(zp2));
+  frag_b[0] = frag_b[0] * s2 + (-zp2);
   /*
   DPCT1064:777: Migrated __hneg2 call is used in a macro/template definition and may not be valid for all macro/template
   uses. Adjust the code.
@@ -357,7 +361,8 @@ inline void scale_and_sub(typename ScalarType<scalar_t>::FragB& frag_b, scalar_t
   DPCT1064:809: Migrated __hfma2 call is used in a macro/template definition and may not be valid for all macro/template
   uses. Adjust the code.
   */
-  frag_b[1] = sycl::ext::intel::math::hfma2(frag_b[1], s2, sycl::ext::intel::math::hneg2(zp2));
+  //frag_b[1] = sycl::ext::intel::math::hfma2(frag_b[1], s2, sycl::ext::intel::math::hneg2(zp2));
+  frag_b[1] = frag_b[1] * s2 +  (-zp2);
 }
 
 template <typename scalar_t>
@@ -391,12 +396,14 @@ inline void scale4(
   DPCT1064:747: Migrated __hmul2 call is used in a macro/template definition and may not be valid for all macro/template
   uses. Adjust the code.
   */
-  frag_b[0] = sycl::ext::intel::math::hmul2(frag_b[0], s_val_1_2);
+  //frag_b[0] = sycl::ext::intel::math::hmul2(frag_b[0], s_val_1_2);
+  frag_b[0] = frag_b[0] * s_val_1_2;
   /*
   DPCT1064:748: Migrated __hmul2 call is used in a macro/template definition and may not be valid for all macro/template
   uses. Adjust the code.
   */
-  frag_b[1] = sycl::ext::intel::math::hmul2(frag_b[1], s_val_3_4);
+  //frag_b[1] = sycl::ext::intel::math::hmul2(frag_b[1], s_val_3_4);
+  frag_b[1] = frag_b[1] * s_val_3_4;
 }
 
 // Given 2 floats multiply by 2 scales (halves)
@@ -1400,7 +1407,8 @@ void Marlin(
         DPCT1064:806: Migrated __hmul2 call is used in a macro/template definition and may not be valid for all
         macro/template uses. Adjust the code.
         */
-        if (is_new_zp) frag_zp[j] = sycl::ext::intel::math::hmul2(frag_zp[j], s2);
+        //if (is_new_zp) frag_zp[j] = sycl::ext::intel::math::hmul2(frag_zp[j], s2);
+        if (is_new_zp) frag_zp[j] = frag_zp[j] * s2;
         scale_and_sub<scalar_t>(frag_b0, s2.x(), frag_zp[j].x());
         scale_and_sub<scalar_t>(frag_b1, s2.y(), frag_zp[j].y());
       } else if constexpr (has_zp && !is_zp_float && group_blocks != -1) {
@@ -1409,7 +1417,8 @@ void Marlin(
         macro/template uses. Adjust the code.
         */
         if (is_new_zp) frag_zp[j] =
-            sycl::ext::intel::math::hmul2(frag_zp[j], *reinterpret_cast<scalar_t2*>(&frag_s[k2][j]));
+            //sycl::ext::intel::math::hmul2(frag_zp[j], *reinterpret_cast<scalar_t2*>(&frag_s[k2][j]));
+            frag_zp[j] * (*reinterpret_cast<scalar_t2*>(&frag_s[k2][j]));
         scale_and_sub<scalar_t>(frag_b0, frag_s[k % 2][j][0].x(), frag_zp[j].x());
         scale_and_sub<scalar_t>(frag_b1, frag_s[k % 2][j][0].y(), frag_zp[j].y());
       } else if constexpr (has_zp && is_zp_float && group_blocks != -1) {
@@ -1676,7 +1685,8 @@ void Marlin(
         DPCT1064:750: Migrated __hmul2 call is used in a macro/template definition and may not be valid for all
         macro/template uses. Adjust the code.
         */
-        res = sycl::ext::intel::math::hmul2(res, s[0]);
+        //res = sycl::ext::intel::math::hmul2(res, s[0]);
+        res = res * s[0];
       }
 
       if constexpr (m_block_size_8) {
@@ -1737,7 +1747,8 @@ void Marlin(
               DPCT1064:744: Migrated __hmul2 call is used in a macro/template definition and may not be valid for all
               macro/template uses. Adjust the code.
               */
-              res = sycl::ext::intel::math::hmul2(res, topk_weight_score);
+              //res = sycl::ext::intel::math::hmul2(res, topk_weight_score);
+              res = res * topk_weight_score;
             }
 
             if (use_atomic_add && slice_count > 1) {

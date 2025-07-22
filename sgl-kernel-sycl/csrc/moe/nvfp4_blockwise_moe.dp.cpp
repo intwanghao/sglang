@@ -28,7 +28,7 @@
 #include "cutlass/util/distribution.h"
 #include "cutlass/util/host_tensor.h"
 #include "cutlass/util/packed_stride.hpp"
-#include "cutlass/util/reference/device/gemm.h"
+//#include "cutlass/util/reference/device/gemm.h"
 #include "cutlass/util/reference/device/tensor_compare.h"
 #include "cutlass/util/reference/host/gett.hpp"
 #include "cutlass/util/reference/host/tensor_compare.h"
@@ -202,7 +202,7 @@ void run_get_group_gemm_starts(
     int N,
     int K) {
   int num_experts = (int)expert_offsets.size(0);
-  auto stream = c10::xpu::getCurrentXPUStream(a_tensors.device().index());
+  auto stream = &c10::xpu::getCurrentXPUStream(a_tensors.device().index()).queue();
 
   TORCH_CHECK(out_tensors.size(1) == N, "Output tensor shape doesn't match expected shape");
   TORCH_CHECK(
@@ -413,7 +413,7 @@ void run_fp4_blockwise_scaled_group_mm(
   size_t workspace_size = Gemm::get_workspace_size(args);
   auto const workspace_options = torch::TensorOptions().dtype(torch::kUInt8).device(a.device());
   auto workspace = torch::empty(workspace_size, workspace_options);
-  const dpct::queue_ptr stream = c10::xpu::getCurrentXPUStream(a.get_device());
+  const dpct::queue_ptr stream = &c10::xpu::getCurrentXPUStream(a.get_device()).queue();
 
   auto can_implement_status = gemm_op.can_implement(args);
   TORCH_CHECK(can_implement_status == cutlass::Status::kSuccess, "Failed to implement GEMM");

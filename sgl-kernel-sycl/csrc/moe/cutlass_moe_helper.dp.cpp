@@ -173,7 +173,7 @@ void run_get_group_gemm_starts(
   TORCH_CHECK(a_tensors.size(1) % 128 == 0 or a_tensors.size(0) % 128 == 0);
 
   int num_experts = (int)expert_offsets.size(0);
-  auto stream = c10::xpu::getCurrentXPUStream(a_tensors.device().index());
+  auto stream = &c10::xpu::getCurrentXPUStream(a_tensors.device().index()).queue();
 
   if (false) {
   }

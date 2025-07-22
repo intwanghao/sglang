@@ -30,7 +30,7 @@ limitations under the License.
 #ifdef FLASHINFER_ENABLE_F16
 #define _DISPATCH_CASE_F16(c_type, ...) \
   case at::ScalarType::Half: {          \
-    using c_type = nv_half;             \
+    using c_type = sycl::half;             \
     return __VA_ARGS__();               \
   }
 #else

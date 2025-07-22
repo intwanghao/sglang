@@ -28,7 +28,7 @@
 #include "cutlass/util/distribution.h"
 #include "cutlass/util/host_tensor.h"
 #include "cutlass/util/packed_stride.hpp"
-#include "cutlass/util/reference/device/gemm.h"
+//#include "cutlass/util/reference/device/gemm.h"
 #include "cutlass/util/reference/device/tensor_compare.h"
 #include "cutlass/util/tensor_view_io.h"
 #include "cutlass_moe_helper.dp.cpp"
@@ -134,8 +134,8 @@ void launch_sm90_fp8_blockwise_scaled_group_mm(
 
   cutlass::KernelHardwareInfo hw_info;
   hw_info.device_id = c10::xpu::current_device();
-  hw_info.sm_count = at::cuda::getCurrentDeviceProperties()->get_max_compute_units();
-
+  //hw_info.sm_count = at::cuda::getCurrentDeviceProperties()->get_max_compute_units();
+  hw_info.sm_count = at::xpu::getCurrentDeviceProperties()->max_compute_units;
   typename GemmKernel::EpilogueArguments epilogue_args{
       {},
       nullptr,
@@ -152,7 +152,7 @@ void launch_sm90_fp8_blockwise_scaled_group_mm(
       hw_info};
 
   c10::DeviceGuard device_guard{c10::Device(at::kXPU, (char)a_ptrs.get_device())};
-  const dpct::queue_ptr stream = c10::xpu::getCurrentXPUStream(a_ptrs.get_device());
+  const dpct::queue_ptr stream = &c10::xpu::getCurrentXPUStream(a_ptrs.get_device()).queue();
 
   auto can_implement_status = gemm_op.can_implement(args);
   TORCH_CHECK(can_implement_status == cutlass::Status::kSuccess, "Failed to implement GEMM");
@@ -271,7 +271,7 @@ void launch_sm100_fp8_blockwise_scaled_group_mm(
       hw_info};
 
   c10::DeviceGuard device_guard{c10::Device(at::kXPU, (char)a_ptrs.get_device())};
-  const dpct::queue_ptr stream = c10::xpu::getCurrentXPUStream(a_ptrs.get_device());
+  const dpct::queue_ptr stream = &c10::xpu::getCurrentXPUStream(a_ptrs.get_device()).queue();
 
   auto can_implement_status = gemm_op.can_implement(args);
   TORCH_CHECK(can_implement_status == cutlass::Status::kSuccess, "Failed to implement GEMM");

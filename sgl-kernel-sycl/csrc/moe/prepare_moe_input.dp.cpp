@@ -117,7 +117,7 @@ void get_moe_prepare_input_caller(
     const int64_t num_experts,
     const int64_t n,
     const int64_t k) {
-  auto stream = c10::xpu::getCurrentXPUStream(topk_ids.device().index());
+  auto stream = &c10::xpu::getCurrentXPUStream(topk_ids.device().index()).queue();
   auto options_int32 = torch::TensorOptions().dtype(torch::kInt32).device(topk_ids.device());
   torch::Tensor atomic_buffer = torch::zeros(num_experts, options_int32);
 
@@ -325,7 +325,7 @@ void shuffleRowsKernel(
 DECLARE_SHUFFLE_ROWS(float);
 DECLARE_SHUFFLE_ROWS(sycl::half);
 DECLARE_SHUFFLE_ROWS(sycl::ext::oneapi::bfloat16);
-DECLARE_SHUFFLE_ROWS(__nv_fp8_e4m3);
+//DECLARE_SHUFFLE_ROWS(__nv_fp8_e4m3);
 DECLARE_SHUFFLE_ROWS(uint8_t);
 
 /*
@@ -386,7 +386,7 @@ void shuffle_rows_caller(
     DTYPE_DISPATCH_CASE(torch::kFloat16, sycl::half);
     DTYPE_DISPATCH_CASE(torch::kBFloat16, sycl::ext::oneapi::bfloat16);
     DTYPE_DISPATCH_CASE(torch::kFloat32, float);
-    DTYPE_DISPATCH_CASE(torch::kFloat8_e4m3fn, __nv_fp8_e4m3);
+    //DTYPE_DISPATCH_CASE(torch::kFloat8_e4m3fn, __nv_fp8_e4m3);
     DTYPE_DISPATCH_CASE(torch::kUInt8, uint8_t);
     default:
       TORCH_CHECK(false, "[moe replicate input] data type dispatch fail!");
@@ -492,7 +492,7 @@ void get_apply_shuffle_mul_sum_caller(
   dpct::dim3 block(blockDim);
 
   dpct::dim3 grid(m);  // blockIdx.x = j, blockIdx.y = i
-  auto stream = c10::xpu::getCurrentXPUStream(input_tensor.device().index());
+  auto stream = &c10::xpu::getCurrentXPUStream(input_tensor.device().index()).queue();
 
   const int32_t* perm_ptr = permutation.data_ptr<int32_t>();
 

@@ -649,7 +649,7 @@ exec_config_t determine_exec_config(
     } else {
       dpct::kernel_function_info attr;
       dpct::get_kernel_function_info(&attr, (const void*)kernel);
-      int reg_size = std::max(attr.numRegs, 1) * th_config.num_threads * 4;
+      int reg_size = std::max(attr.num_regs, 1) * th_config.num_threads * 4;
       int allow_count = std::min(device_max_reg_size / reg_size, max_shared_mem / (cache_size + 1024));
       allow_count = std::max(std::min(allow_count, 4), 1);
       if (allow_count > count) {
@@ -1180,7 +1180,7 @@ torch::Tensor moe_wna16_marlin_gemm(
         num_groups,
         group_size,
         dev,
-        c10::xpu::getCurrentXPUStream(dev),
+        &c10::xpu::getCurrentXPUStream(dev).queue(),
         thread_k,
         thread_n,
         sms,
@@ -1217,7 +1217,7 @@ torch::Tensor moe_wna16_marlin_gemm(
         num_groups,
         group_size,
         dev,
-        c10::xpu::getCurrentXPUStream(dev),
+        &c10::xpu::getCurrentXPUStream(dev).queue(),
         thread_k,
         thread_n,
         sms,

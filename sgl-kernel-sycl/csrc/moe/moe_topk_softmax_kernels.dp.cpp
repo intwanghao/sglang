@@ -26,7 +26,7 @@ limitations under the License.
 #include <ATen/xpu/XPUContext.h>
 
 #include <c10/core/DeviceGuard.h>
-
+#include <cfloat>
 #include <torch/all.h>
 #include <dpct/dpl_utils.hpp>
 
@@ -137,7 +137,8 @@ void moeTopK(
     const int k,
     const int start_expert,
     const int end_expert,
-    const bool renormalize) {
+    const bool renormalize,
+    sycl::local_accessor<std::byte, 1> temp_storage) {
   auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
   using cub_kvp = dpct::key_value_pair<int, float>;
   using BlockReduce = sycl::group<3>;
@@ -170,9 +171,11 @@ void moeTopK(
 
       thread_kvp = arg_max(inp_kvp, thread_kvp);
     }
-
+    auto &a0 = *sycl::ext::oneapi::group_local_memory_for_overwrite<int>(sycl::ext::oneapi::this_work_item::get_work_group<3>());
+    auto handle = sycl::ext::oneapi::experimental::group_with_scratchpad(
+        sycl::ext::oneapi::this_work_item::get_work_group<3>(), sycl::span(&temp_storage[0], temp_storage.size()));
     const cub_kvp result_kvp =
-        sycl::reduce_over_group(sycl::ext::oneapi::this_work_item::get_work_group<3>(), thread_kvp);
+        sycl::ext::oneapi::experimental::reduce_over_group(handle, thread_kvp, arg_max);
     if (item_ct1.get_local_id(2) == 0) {
       // Ignore experts the node isn't responsible for with expert parallelism
       const int expert = result_kvp.key;
@@ -579,7 +582,7 @@ void topkGatingSoftmaxKernelLauncher(
             else if (_e.has_value())
               cgh.depends_on(_e.value());
           }(last_event);
-
+          sycl::local_accessor<std::byte, 1> temp_storage_acc(sycl::range<1>(sycl::range<3>(1, 1, TPB).size() * sizeof(dpct::key_value_pair<int, float>)), cgh);
           cgh.parallel_for(
               sycl::nd_range<3>(
                   sycl::range<3>(1, 1, num_tokens) * sycl::range<3>(1, 1, TPB), sycl::range<3>(1, 1, TPB)),
@@ -594,7 +597,8 @@ void topkGatingSoftmaxKernelLauncher(
                     topk,
                     0,
                     num_experts,
-                    renormalize);
+                    renormalize,
+                    temp_storage_acc);
               });
         });
       }
@@ -640,7 +644,7 @@ void topk_softmax(
   const int64_t workspace_size = needs_workspace ? num_tokens * num_experts : 0;
 
   const c10::OptionalDeviceGuard device_guard(device_of(gating_output));
-  const dpct::queue_ptr stream = c10::xpu::getCurrentXPUStream();
+  const dpct::queue_ptr stream = &c10::xpu::getCurrentXPUStream().queue();
   torch::Tensor softmax_workspace =
       torch::empty({workspace_size}, gating_output.options().dtype(at::ScalarType::Float));
 

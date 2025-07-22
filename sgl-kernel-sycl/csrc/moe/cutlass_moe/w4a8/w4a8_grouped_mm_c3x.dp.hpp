@@ -198,7 +198,7 @@ void cutlass_w4a8_group_gemm_caller(
   TORCH_CHECK(expert_offsets.scalar_type() == torch::kInt32, "Expert offsets must be int32 type");
   TORCH_CHECK(problem_sizes.scalar_type() == torch::kInt32, "Problem sizes must be int32 type");
 
-  auto stream = c10::xpu::getCurrentXPUStream(a_tensors.device().index());
+  auto stream = &c10::xpu::getCurrentXPUStream(a_tensors.device().index()).queue();
   auto options_int = torch::TensorOptions().dtype(torch::kInt64).device(a_tensors.device());
 
   torch::Tensor a_ptrs = torch::empty(num_experts, options_int);

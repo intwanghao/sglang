@@ -1,0 +1,170 @@
+CC := icpx
+
+LD := $(CC)
+
+#DPCT2001:820: You can link with more libraries by adding them here.
+LIB := 
+
+FLAGS := 
+
+ifeq ($(shell which $(CC)),)
+    $(error ERROR - $(CC) compiler not found)
+endif
+
+ROOT_DIR     := $(shell dirname $(shell which $(CC)))
+INCLUDE_SYCL := $(ROOT_DIR)/../include
+INCLUDE_CL   := $(ROOT_DIR)/../include/sycl
+DPCT_HEADER  := /export/users/wanghao2/dpctinstall/include
+CUTLASS_SYCL_HEADER := /export/users/wanghao2/project/cutlass-syclinstall/include
+
+FLAGS := -DCUTLASS_ENABLE_SYCL -I${CUTLASS_SYCL_HEADER} -I${INCLUDE_SYCL} -I${INCLUDE_CL} -I${DPCT_HEADER} -I./include -I./csrc -I/export/users/wanghao2/miniforge3/envs/sglangsycl/include/python3.12  -isystem /export/users/wanghao2/miniforge3/envs/sglangsycl/include/python3.12 -isystem /export/users/wanghao2/miniforge3/envs/sglangsycl/lib/python3.12/site-packages/torch/include -isystem /export/users/wanghao2/miniforge3/envs/sglangsycl/lib/python3.12/site-packages/torch/include/torch/csrc/api/include
+
+
+TARGET_0_SRC_0 = ./csrc/moe/cutlass_moe/w4a8/scaled_mm_entry.dp.cpp
+TARGET_0_OBJ_0 = ./csrc/moe/cutlass_moe/w4a8/scaled_mm_entry.dp.o
+TARGET_0_FLAG_0 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_1 = ./csrc/moe/cutlass_moe/w4a8/w4a8_grouped_mm_c3x.dp.cpp
+TARGET_0_OBJ_1 = ./csrc/moe/cutlass_moe/w4a8/w4a8_grouped_mm_c3x.dp.o
+TARGET_0_FLAG_1 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_2 = ./csrc/moe/cutlass_moe/w4a8/w4a8_moe_data.dp.cpp
+TARGET_0_OBJ_2 = ./csrc/moe/cutlass_moe/w4a8/w4a8_moe_data.dp.o
+TARGET_0_FLAG_2 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_3 = ./csrc/moe/ep_moe_reorder_kernel.dp.cpp
+TARGET_0_OBJ_3 = ./csrc/moe/ep_moe_reorder_kernel.dp.o
+TARGET_0_FLAG_3 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_4 = ./csrc/moe/ep_moe_silu_and_mul_kernel.dp.cpp
+TARGET_0_OBJ_4 = ./csrc/moe/ep_moe_silu_and_mul_kernel.dp.o
+TARGET_0_FLAG_4 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_5 = ./csrc/moe/fp8_blockwise_moe_kernel.dp.cpp
+TARGET_0_OBJ_5 = ./csrc/moe/fp8_blockwise_moe_kernel.dp.o
+TARGET_0_FLAG_5 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_6 = ./csrc/moe/marlin_moe_wna16/awq_marlin_repack.dp.cpp
+TARGET_0_OBJ_6 = ./csrc/moe/marlin_moe_wna16/awq_marlin_repack.dp.o
+TARGET_0_FLAG_6 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_7 = ./csrc/moe/marlin_moe_wna16/gptq_marlin_repack.dp.cpp
+TARGET_0_OBJ_7 = ./csrc/moe/marlin_moe_wna16/gptq_marlin_repack.dp.o
+TARGET_0_FLAG_7 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_8 = ./csrc/moe/marlin_moe_wna16/kernel_bf16_ku4.dp.cpp
+TARGET_0_OBJ_8 = ./csrc/moe/marlin_moe_wna16/kernel_bf16_ku4.dp.o
+TARGET_0_FLAG_8 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_9 = ./csrc/moe/marlin_moe_wna16/kernel_bf16_ku4b8.dp.cpp
+TARGET_0_OBJ_9 = ./csrc/moe/marlin_moe_wna16/kernel_bf16_ku4b8.dp.o
+TARGET_0_FLAG_9 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_10 = ./csrc/moe/marlin_moe_wna16/kernel_bf16_ku8b128.dp.cpp
+TARGET_0_OBJ_10 = ./csrc/moe/marlin_moe_wna16/kernel_bf16_ku8b128.dp.o
+TARGET_0_FLAG_10 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_11 = ./csrc/moe/marlin_moe_wna16/kernel_fp16_ku4.dp.cpp
+TARGET_0_OBJ_11 = ./csrc/moe/marlin_moe_wna16/kernel_fp16_ku4.dp.o
+TARGET_0_FLAG_11 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_12 = ./csrc/moe/marlin_moe_wna16/kernel_fp16_ku4b8.dp.cpp
+TARGET_0_OBJ_12 = ./csrc/moe/marlin_moe_wna16/kernel_fp16_ku4b8.dp.o
+TARGET_0_FLAG_12 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_13 = ./csrc/moe/marlin_moe_wna16/kernel_fp16_ku8b128.dp.cpp
+TARGET_0_OBJ_13 = ./csrc/moe/marlin_moe_wna16/kernel_fp16_ku8b128.dp.o
+TARGET_0_FLAG_13 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_14 = ./csrc/moe/marlin_moe_wna16/ops.dp.cpp
+TARGET_0_OBJ_14 = ./csrc/moe/marlin_moe_wna16/ops.dp.o
+TARGET_0_FLAG_14 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_15 = ./csrc/moe/moe_align_kernel.dp.cpp
+TARGET_0_OBJ_15 = ./csrc/moe/moe_align_kernel.dp.o
+TARGET_0_FLAG_15 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_16 = ./csrc/moe/moe_fused_gate.dp.cpp
+TARGET_0_OBJ_16 = ./csrc/moe/moe_fused_gate.dp.o
+TARGET_0_FLAG_16 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_17 = ./csrc/moe/moe_topk_softmax_kernels.dp.cpp
+TARGET_0_OBJ_17 = ./csrc/moe/moe_topk_softmax_kernels.dp.o
+TARGET_0_FLAG_17 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_18 = ./csrc/moe/nvfp4_blockwise_moe.dp.cpp
+TARGET_0_OBJ_18 = ./csrc/moe/nvfp4_blockwise_moe.dp.o
+TARGET_0_FLAG_18 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+TARGET_0_SRC_19 = ./csrc/moe/prepare_moe_input.dp.cpp
+TARGET_0_OBJ_19 = ./csrc/moe/prepare_moe_input.dp.o
+TARGET_0_FLAG_19 = -DFLASHATTENTION_DISABLE_BACKWARD -DFLASHATTENTION_DISABLE_DROPOUT -DFLASHATTENTION_DISABLE_UNEVEN_K -DPy_LIMITED_API=0x03090000 -DUSE_C10D_GLOO -DUSE_C10D_NCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dcommon_ops_EXPORTS -I./include -I./csrc -I./build/_deps/repo-cutlass-src/include -I./build/_deps/repo-cutlass-src/tools/util/include -I./build/_deps/repo-flashinfer-src/include -I./build/_deps/repo-flashinfer-src/csrc -I./build/_deps/repo-mscclpp-src/include -I./build/_deps/repo-cutlass-src/examples/77_blackwell_fmha -I./build/_deps/repo-cutlass-src/examples/common -I./build/_deps/repo-flash-attention-src/csrc/flash_attn/src -DONNX_NAMESPACE=onnx_c2 -D_GLIBCXX_USE_CXX11_ABI=1 -O3 -DNDEBUG -std=c++17 -DNDEBUG -DOPERATOR_NAMESPACE=sgl-kernel -O3 -fPIC -std=c++17 -DFLASHINFER_ENABLE_F16 -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 -DCUTLASS_VERSIONS_GENERATED -DCUTLASS_TEST_LEVEL=0 -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1 -DCUTLASS_DEBUG_TRACE_LEVEL=0 -DFLASHINFER_ENABLE_BF16 -DFLASHINFER_ENABLE_FP8 -DFLASHINFER_ENABLE_FP8_E4M3 -DFLASHINFER_ENABLE_FP8_E5M2 -D_GLIBCXX_USE_CXX11_ABI=1 ${FLAGS}
+
+.PHONY:all clean
+OBJS_0 :=  ${TARGET_0_OBJ_0} ${TARGET_0_OBJ_1} ${TARGET_0_OBJ_2} ${TARGET_0_OBJ_3} ${TARGET_0_OBJ_4} ${TARGET_0_OBJ_5} ${TARGET_0_OBJ_6} ${TARGET_0_OBJ_7} ${TARGET_0_OBJ_8} ${TARGET_0_OBJ_9} ${TARGET_0_OBJ_10} ${TARGET_0_OBJ_11} ${TARGET_0_OBJ_12} ${TARGET_0_OBJ_13} ${TARGET_0_OBJ_14} ${TARGET_0_OBJ_15} ${TARGET_0_OBJ_16} ${TARGET_0_OBJ_17} ${TARGET_0_OBJ_18} ${TARGET_0_OBJ_19}
+OBJS :=  ${OBJS_0}
+
+all: $(OBJS)
+
+$(TARGET_0_OBJ_0):$(TARGET_0_SRC_0)
+	$(CC) -fsycl -c ${TARGET_0_SRC_0} -o ${TARGET_0_OBJ_0} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_1):$(TARGET_0_SRC_1)
+	$(CC) -fsycl -c ${TARGET_0_SRC_1} -o ${TARGET_0_OBJ_1} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_2):$(TARGET_0_SRC_2)
+	$(CC) -fsycl -c ${TARGET_0_SRC_2} -o ${TARGET_0_OBJ_2} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_3):$(TARGET_0_SRC_3)
+	$(CC) -fsycl -c ${TARGET_0_SRC_3} -o ${TARGET_0_OBJ_3} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_4):$(TARGET_0_SRC_4)
+	$(CC) -fsycl -c ${TARGET_0_SRC_4} -o ${TARGET_0_OBJ_4} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_5):$(TARGET_0_SRC_5)
+	$(CC) -fsycl -c ${TARGET_0_SRC_5} -o ${TARGET_0_OBJ_5} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_6):$(TARGET_0_SRC_6)
+	$(CC) -fsycl -c ${TARGET_0_SRC_6} -o ${TARGET_0_OBJ_6} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_7):$(TARGET_0_SRC_7)
+	$(CC) -fsycl -c ${TARGET_0_SRC_7} -o ${TARGET_0_OBJ_7} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_8):$(TARGET_0_SRC_8)
+	$(CC) -fsycl -c ${TARGET_0_SRC_8} -o ${TARGET_0_OBJ_8} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_9):$(TARGET_0_SRC_9)
+	$(CC) -fsycl -c ${TARGET_0_SRC_9} -o ${TARGET_0_OBJ_9} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_10):$(TARGET_0_SRC_10)
+	$(CC) -fsycl -c ${TARGET_0_SRC_10} -o ${TARGET_0_OBJ_10} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_11):$(TARGET_0_SRC_11)
+	$(CC) -fsycl -c ${TARGET_0_SRC_11} -o ${TARGET_0_OBJ_11} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_12):$(TARGET_0_SRC_12)
+	$(CC) -fsycl -c ${TARGET_0_SRC_12} -o ${TARGET_0_OBJ_12} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_13):$(TARGET_0_SRC_13)
+	$(CC) -fsycl -c ${TARGET_0_SRC_13} -o ${TARGET_0_OBJ_13} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_14):$(TARGET_0_SRC_14)
+	$(CC) -fsycl -c ${TARGET_0_SRC_14} -o ${TARGET_0_OBJ_14} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_15):$(TARGET_0_SRC_15)
+	$(CC) -fsycl -c ${TARGET_0_SRC_15} -o ${TARGET_0_OBJ_15} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_16):$(TARGET_0_SRC_16)
+	$(CC) -fsycl -c ${TARGET_0_SRC_16} -o ${TARGET_0_OBJ_16} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_17):$(TARGET_0_SRC_17)
+	$(CC) -fsycl -c ${TARGET_0_SRC_17} -o ${TARGET_0_OBJ_17} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_18):$(TARGET_0_SRC_18)
+	$(CC) -fsycl -c ${TARGET_0_SRC_18} -o ${TARGET_0_OBJ_18} $(TARGET_0_FLAG_19)
+
+$(TARGET_0_OBJ_19):$(TARGET_0_SRC_19)
+	$(CC) -fsycl -c ${TARGET_0_SRC_19} -o ${TARGET_0_OBJ_19} $(TARGET_0_FLAG_19)
+
+clean:
+	rm -f  ${OBJS_0}

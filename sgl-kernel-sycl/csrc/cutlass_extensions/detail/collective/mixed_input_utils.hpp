@@ -202,15 +202,21 @@ struct MixedGroupedGemmInputUtils {
       /*
       DPCT1053:590: Migration of device assembly code is not supported.
       */
-      asm volatile(
-          "{\n"
-          "  .reg .b32 pos, neg                    ;\n"
-          "  prmt .b32 neg, %3, %4, %1             ;\n"
-          "  prmt .b32 pos, %5, %6, %1             ;\n"
-          "  prmt .b32 %0, pos, neg, %2            ;\n"
-          "}\n"
-          : "=r"(r[i])
-          : "r"(lut_idx), "r"(sign), "r"(scale_neg_[0]), "r"(scale_neg_[1]), "r"(scale_pos_[0]), "r"(scale_pos_[1]));
+      //asm volatile(
+      //    "{\n"
+      //    "  .reg .b32 pos, neg                    ;\n"
+      //    "  prmt .b32 neg, %3, %4, %1             ;\n"
+      //    "  prmt .b32 pos, %5, %6, %1             ;\n"
+      //    "  prmt .b32 %0, pos, neg, %2            ;\n"
+      //    "}\n"
+      //    : "=r"(r[i])
+      //    : "r"(lut_idx), "r"(sign), "r"(scale_neg_[0]), "r"(scale_neg_[1]), "r"(scale_pos_[0]), "r"(scale_pos_[1]));
+      {
+        int pos, neg;
+        neg = dpct::byte_level_permute_custom(scale_neg_[0], scale_neg_[1], lut_idx);
+        pos = dpct::byte_level_permute_custom(scale_pos_[0], scale_pos_[1], lut_idx);
+        r[i] = dpct::byte_level_permute_custom(pos, neg, sign);
+      }
     }
   }
 

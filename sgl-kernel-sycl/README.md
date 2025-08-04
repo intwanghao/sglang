@@ -22,6 +22,9 @@ pip3 install sgl-kernel
 Development build:
 
 ```bash
+cp /user/wanghao2/dles252install/compiler/2025.2/lib/libsycl.so /user/wanghao2/miniforge3/envs/syclsglang312/lib/python3.12/site-packages/torch/lib/../../../../
+cp /user/wanghao2/dles252install/compiler/2025.2/lib/libsycl.so.8 /user/wanghao2/miniforge3/envs/syclsglang312/lib/python3.12/site-packages/torch/lib/../../../../
+cp /user/wanghao2/dles252install/compiler/2025.2/lib/libsycl.so.8.0.0 /user/wanghao2/miniforge3/envs/syclsglang312/lib/python3.12/site-packages/torch/lib/../../../../
 make build
 ```
 

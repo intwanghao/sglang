@@ -4,7 +4,7 @@ import pytest
 import torch
 import triton
 import triton.language as tl
-from sgl_kernel import moe_align_block_size
+from sgl_kernel_sycl import moe_align_block_size
 
 
 def ceil_div(a, b):
@@ -153,7 +153,7 @@ def test_moe_align_block_size_compare_implementations(
     block_size, num_tokens, topk, num_experts, pad_sorted_token_ids
 ):
 
-    topk_ids = torch.argsort(torch.rand(num_tokens, num_experts, device="cuda"), dim=1)[
+    topk_ids = torch.argsort(torch.rand(num_tokens, num_experts, device="xpu"), dim=1)[
         :, :topk
     ]
 

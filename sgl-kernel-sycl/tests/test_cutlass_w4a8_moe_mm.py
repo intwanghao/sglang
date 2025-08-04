@@ -1,6 +1,6 @@
 import pytest
 import torch
-from sgl_kernel import cutlass_w4a8_moe_mm
+from sgl_kernel_sycl import cutlass_w4a8_moe_mm
 
 
 def pack_int4_values_to_int8(int4_values_interleaved: torch.Tensor) -> torch.Tensor:
@@ -22,7 +22,7 @@ def pack_int4_values_to_int8(int4_values_interleaved: torch.Tensor) -> torch.Ten
 def pack_interleave(num_experts, ref_weight, ref_scale):
     n, k = ref_weight.shape[1], ref_weight.shape[2]
 
-    weight = pack_int4_values_to_int8(ref_weight.cpu()).cuda()
+    weight = pack_int4_values_to_int8(ref_weight.cpu()).xpu()
     w_q = weight.view((num_experts, n, k // 2)).view(torch.int8)
     w_q = w_q.contiguous()
 
@@ -47,7 +47,7 @@ def test_int4_fp8_grouped_gemm_single_expert(batch_size):
     n = 1024  # output dimension
     torch.manual_seed(0)
     dtype = torch.bfloat16
-    device = "cuda"
+    device = "xpu"
     debug = False
 
     print(f"\nTesting with batch_size={batch_size}")
@@ -64,7 +64,7 @@ def test_int4_fp8_grouped_gemm_single_expert(batch_size):
             -8, 8, (num_experts, n, k), dtype=torch.int8, device=device
         )
         affine_coeff = 0.005
-        a_scale = torch.randn(1, dtype=torch.float32).cuda() * 0.02
+        a_scale = torch.randn(1, dtype=torch.float32).xpu() * 0.02
         ref_w_scale = (
             torch.randn(num_experts, n, k // 128, dtype=dtype, device=device)
             * affine_coeff
@@ -134,7 +134,7 @@ def test_int4_fp8_grouped_gemm_single_expert(batch_size):
 def test_int4_fp8_grouped_gemm_multi_experts(batch_size, k, n, num_experts):
     torch.manual_seed(0)
     dtype = torch.bfloat16
-    device = "cuda"
+    device = "xpu"
     debug = False
 
     print(
@@ -152,7 +152,7 @@ def test_int4_fp8_grouped_gemm_multi_experts(batch_size, k, n, num_experts):
             -8, 8, (num_experts, n, k), dtype=torch.int8, device=device
         )
         affine_coeff = 0.005
-        a_scale = torch.randn(1, dtype=torch.float32).cuda() * 0.02
+        a_scale = torch.randn(1, dtype=torch.float32).xpu() * 0.02
         ref_w_scale = (
             torch.randn(num_experts, n, k // 128, dtype=dtype, device=device)
             * affine_coeff

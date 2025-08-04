@@ -482,7 +482,7 @@ std::vector<at::Tensor> moe_fused_gate(
     double routed_scaling_factor) {
   int64_t num_rows = input.size(0);
   int32_t num_experts = input.size(1);
-  auto options = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA);
+  auto options = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kXPU);
   auto output = torch::empty({num_rows, topk}, options);
   auto indices = torch::empty({num_rows, topk}, options.dtype(torch::kInt32));
 

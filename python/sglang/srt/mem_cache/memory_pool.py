@@ -45,7 +45,7 @@ GB = 1024 * 1024 * 1024
 _is_cuda = is_cuda()
 _is_npu = is_npu()
 if not _is_npu:
-    from sgl_kernel.kvcacheio import transfer_kv_per_layer, transfer_kv_per_layer_mla
+    from sgl_kernel_sycl.kvcacheio import transfer_kv_per_layer, transfer_kv_per_layer_mla
 
 
 class ReqToTokenPool:

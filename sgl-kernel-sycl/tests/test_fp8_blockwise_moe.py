@@ -3,7 +3,7 @@ from typing import Tuple
 
 import pytest
 import torch
-from sgl_kernel import fp8_blockwise_scaled_grouped_mm
+from sgl_kernel_sycl import fp8_blockwise_scaled_grouped_mm
 
 from sglang.srt.layers.quantization.fp8_kernel import (
     per_token_group_quant_fp8_hopper_moe_mn_major,
@@ -91,14 +91,16 @@ def baseline_scaled_mm(
 
 
 def is_sm100_supported(device=None) -> bool:
-    return (torch.cuda.get_device_capability(device)[0] == 10) and (
-        torch.version.cuda >= "12.8"
+    return True
+    return (torch.xpu.get_device_capability(device)[0] == 10) and (
+        torch.version.xpu >= "12.8"
     )
 
 
 def is_sm90_supported(device=None) -> bool:
-    return (torch.cuda.get_device_capability(device)[0] == 9) and (
-        torch.version.cuda >= "12.3"
+    return True
+    return (torch.xpu.get_device_capability(device)[0] == 9) and (
+        torch.version.xpu >= "12.3"
     )
 
 
@@ -110,10 +112,11 @@ def is_sm90_supported(device=None) -> bool:
 @pytest.mark.parametrize("out_dtype", [torch.half, torch.bfloat16])
 @pytest.mark.parametrize("use_custom_kernel", [True, False])
 def test_fp8_blockwise_scaled_grouped_mm(num_experts, out_dtype, use_custom_kernel):
-    cc = torch.cuda.get_device_capability(None)[0]
-    if cc == 10 and use_custom_kernel:
-        return
-    device = "cuda"
+    #cc = torch.xpu.get_device_capability(None)[0]
+    #if cc == 10 and use_custom_kernel:
+    #    return
+    cc = 9
+    device = "xpu"
     alignment = 16
     n_g = alignment * random.randint(1, 5) * 128
     k_g = alignment * random.randint(1, 5) * 128

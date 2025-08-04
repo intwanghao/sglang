@@ -2,7 +2,7 @@ import itertools
 
 import pytest
 import torch
-from sgl_kernel import topk_softmax
+from sgl_kernel_sycl import topk_softmax
 
 
 @pytest.mark.parametrize(
@@ -17,11 +17,11 @@ from sgl_kernel import topk_softmax
 )
 def test_topk_softmax(num_tokens, num_experts, topk):
     gating_output = torch.randn(
-        (num_tokens, num_experts), dtype=torch.float32, device="cuda"
+        (num_tokens, num_experts), dtype=torch.float32, device="xpu"
     )
 
-    topk_weights = torch.empty((num_tokens, topk), dtype=torch.float32, device="cuda")
-    topk_indices = torch.empty((num_tokens, topk), dtype=torch.int32, device="cuda")
+    topk_weights = torch.empty((num_tokens, topk), dtype=torch.float32, device="xpu")
+    topk_indices = torch.empty((num_tokens, topk), dtype=torch.int32, device="xpu")
 
     topk_softmax(
         topk_weights,
@@ -55,10 +55,10 @@ def test_topk_softmax(num_tokens, num_experts, topk):
     ),
 )
 def test_topk_softmax_dtype_regression(num_tokens, num_experts, topk, dtype):
-    gating_output = torch.randn((num_tokens, num_experts), dtype=dtype, device="cuda")
+    gating_output = torch.randn((num_tokens, num_experts), dtype=dtype, device="xpu")
 
-    topk_weights = torch.empty((num_tokens, topk), dtype=torch.float32, device="cuda")
-    topk_indices = torch.empty((num_tokens, topk), dtype=torch.int32, device="cuda")
+    topk_weights = torch.empty((num_tokens, topk), dtype=torch.float32, device="xpu")
+    topk_indices = torch.empty((num_tokens, topk), dtype=torch.int32, device="xpu")
 
     topk_softmax(
         topk_weights,
@@ -67,9 +67,9 @@ def test_topk_softmax_dtype_regression(num_tokens, num_experts, topk, dtype):
     )
 
     topk_weights_ref = torch.empty(
-        (num_tokens, topk), dtype=torch.float32, device="cuda"
+        (num_tokens, topk), dtype=torch.float32, device="xpu"
     )
-    topk_indices_ref = torch.empty((num_tokens, topk), dtype=torch.int32, device="cuda")
+    topk_indices_ref = torch.empty((num_tokens, topk), dtype=torch.int32, device="xpu")
 
     topk_softmax(
         topk_weights_ref,
@@ -98,11 +98,11 @@ def test_topk_softmax_dtype_regression(num_tokens, num_experts, topk, dtype):
 )
 def test_topk_softmax_renormalize(num_tokens, num_experts, topk):
     gating_output = torch.randn(
-        (num_tokens, num_experts), dtype=torch.bfloat16, device="cuda"
+        (num_tokens, num_experts), dtype=torch.bfloat16, device="xpu"
     )
 
-    topk_weights = torch.empty((num_tokens, topk), dtype=torch.float32, device="cuda")
-    topk_indices = torch.empty((num_tokens, topk), dtype=torch.int32, device="cuda")
+    topk_weights = torch.empty((num_tokens, topk), dtype=torch.float32, device="xpu")
+    topk_indices = torch.empty((num_tokens, topk), dtype=torch.int32, device="xpu")
 
     topk_softmax(
         topk_weights,
@@ -112,11 +112,11 @@ def test_topk_softmax_renormalize(num_tokens, num_experts, topk):
     )
 
     topk_weights_ref = torch.empty(
-        (num_tokens, topk), dtype=torch.float32, device="cuda"
+        (num_tokens, topk), dtype=torch.float32, device="xpu"
     )
-    topk_indices_ref = torch.empty((num_tokens, topk), dtype=torch.int32, device="cuda")
+    topk_indices_ref = torch.empty((num_tokens, topk), dtype=torch.int32, device="xpu")
     token_expert_indices_ref = torch.empty(
-        (num_tokens, topk), dtype=torch.int32, device="cuda"
+        (num_tokens, topk), dtype=torch.int32, device="xpu"
     )
 
     topk_softmax(

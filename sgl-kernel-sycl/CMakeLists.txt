@@ -39,7 +39,7 @@ elseif ("${COMPATIBILITY_VALUE}" VERSION_GREATER_EQUAL "11.8")
     message("COMPATIBILITY_VALUE ${COMPATIBILITY_VALUE} >= 11.8")
 endif()
 
-#message(STATUS "IntelSYCL include dirs: ${SYCL_INCLUDE_DIR}")
+message(STATUS "IntelSYCL include dirs: ${SYCL_INCLUDE_DIR}")
 
 # clean Torch Flag
 #clear_cuda_arches(CMAKE_FLAG)
@@ -47,20 +47,20 @@ endif()
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/csrc
-    /export/users/wanghao2/oneapiinstall/compiler/2025.2/include/sycl
-    /export/users/wanghao2/oneapiinstall/compiler/2025.2/include
+    /user/wanghao2/dles252install/compiler/2025.2/include
+    /user/wanghao2/dles252install/compiler/2025.2/include/sycl
     ${PROJECT_SOURCE_DIR}/dpctinstall/dpct_header/include
     ${PROJECT_SOURCE_DIR}/build_sycl/_deps/repo-flashinfer-src/include
-    /export/users/wanghao2/project/cutlass-syclinstall/include
-    /export/users/wanghao2/lzinstall/usr/include
-    /export/users/wanghao2/lzdevinstall/usr/include
+    /user/wanghao2/cutlass-syclinstall/cutlass-syclinstall/include
+    /user/wanghao2/lzinstall/usr/include
+    /user/wanghao2/lzdevinstall/usr/include
 )
 
 include_directories(${SYCL_INCLUDE_DIR})
 
 link_directories(
-    /export/users/wanghao2/lzinstall/usr/lib
-    /export/users/wanghao2/lzdevinstall/usr/lib
+    /user/wanghao2/lzinstall/usr/lib
+    /user/wanghao2/lzdevinstall/usr/lib
 )
 
 set(SGL_KERNEL_CUDA_FLAGS

@@ -2,7 +2,7 @@ import itertools
 
 import pytest
 import torch
-from sgl_kernel import ep_moe_pre_reorder
+from sgl_kernel_sycl import ep_moe_pre_reorder
 
 from sglang.srt.layers.moe.ep_moe.kernels import pre_reorder_triton_kernel
 
@@ -117,7 +117,7 @@ def test_ep_moe_pre_reorder_vs_triton(
     dtype: torch.dtype,
     use_per_token_if_dynamic: bool,
 ):
-    device = torch.device("cuda")
+    device = torch.device("xpu")
     start_expert_id = 0
     end_expert_id = 15
 

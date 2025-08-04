@@ -4,7 +4,7 @@ import pytest
 import torch
 from sgl_kernel_sycl import ep_moe_post_reorder
 
-#from sglang.srt.layers.moe.ep_moe.kernels import post_reorder_triton_kernel
+from sglang.srt.layers.moe.ep_moe.kernels import post_reorder_triton_kernel
 
 
 def create_test_tensors(
@@ -112,7 +112,7 @@ def test_ep_moe_post_reorder_vs_triton(
     topk: int,
     dtype: torch.dtype,
 ):
-    device = torch.device("cpu")
+    device = torch.device("xpu")
     start_expert_id = 0
     end_expert_id = 15
 
@@ -145,19 +145,19 @@ def test_ep_moe_post_reorder_vs_triton(
         topk,
     )
 
-    #triton_output = run_triton_kernel(
-    #    down_output,
-    #    output_triton,
-    #    src2dst,
-    #    topk_ids,
-    #    topk_weights,
-    #    start_expert_id,
-    #    end_expert_id,
-    #    topk,
-    #    hidden_size,
-    #)
+    triton_output = run_triton_kernel(
+        down_output,
+        output_triton,
+        src2dst,
+        topk_ids,
+        topk_weights,
+        start_expert_id,
+        end_expert_id,
+        topk,
+        hidden_size,
+    )
 
-    #assert_close(cuda_output, triton_output)
+    assert_close(cuda_output, triton_output)
 
 
 if __name__ == "__main__":

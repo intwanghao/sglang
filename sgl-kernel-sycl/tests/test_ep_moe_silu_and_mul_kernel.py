@@ -2,7 +2,7 @@ import itertools
 
 import pytest
 import torch
-from sgl_kernel import ep_moe_silu_and_mul
+from sgl_kernel_sycl import ep_moe_silu_and_mul
 
 from sglang.srt.layers.moe.ep_moe.kernels import silu_and_mul_triton_kernel
 
@@ -88,7 +88,7 @@ def test_ep_moe_silu_and_mul_vs_triton(
     hidden_size: int,
     dtype: torch.dtype,
 ):
-    device = torch.device("cuda")
+    device = torch.device("xpu")
     start_expert_id = 0
     end_expert_id = 15
 

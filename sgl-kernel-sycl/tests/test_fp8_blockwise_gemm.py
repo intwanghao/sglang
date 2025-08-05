@@ -4,7 +4,7 @@ from typing import Optional, Type
 
 import pytest
 import torch
-from sgl_kernel import fp8_blockwise_scaled_mm
+from sgl_kernel_sycl import fp8_blockwise_scaled_mm
 
 
 def cdiv(a: int, b: int) -> int:

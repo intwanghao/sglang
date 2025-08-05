@@ -1,7 +1,7 @@
 import pytest
 import torch
 import torch.nn.functional as F
-from sgl_kernel import tree_speculative_sampling_target_only
+from sgl_kernel_sycl import tree_speculative_sampling_target_only
 
 test_cases = [
     (

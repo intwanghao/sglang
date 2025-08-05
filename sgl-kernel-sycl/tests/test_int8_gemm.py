@@ -1,6 +1,6 @@
 import pytest
 import torch
-from sgl_kernel import int8_scaled_mm
+from sgl_kernel_sycl import int8_scaled_mm
 
 
 def to_int8(tensor: torch.Tensor) -> torch.Tensor:

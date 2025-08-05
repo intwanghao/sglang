@@ -1,6 +1,6 @@
 import pytest
 import torch
-from sgl_kernel import fp8_scaled_mm
+from sgl_kernel_sycl import fp8_scaled_mm
 
 
 def torch_scaled_mm(a, b, scale_a, scale_b, out_dtype, bias):

@@ -4,7 +4,7 @@ import math
 import torch
 import triton
 import triton.language as tl
-from sgl_kernel import lightning_attention_decode
+from sgl_kernel_sycl import lightning_attention_decode
 
 
 def next_power_of_2(n):
@@ -159,7 +159,7 @@ def lightning_attention_decode_kernel(q, k, v, past_kv, slope, output, new_kv):
 
 def calculate_diff(batch_size):
     dtype = torch.bfloat16
-    device = torch.device("cuda")
+    device = torch.device("xpu")
     num_heads = 64
     head_dim = 96
     seq_len = 1
@@ -226,7 +226,7 @@ configs = [(bs,) for bs in batch_size_range]
 )
 def benchmark(batch_size, provider):
     dtype = torch.bfloat16
-    device = torch.device("cuda")
+    device = torch.device("xpu")
     num_heads = 64
     head_dim = 96
     seq_len = 1

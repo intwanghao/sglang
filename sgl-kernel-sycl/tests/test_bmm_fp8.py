@@ -3,7 +3,7 @@
 import pytest
 import torch
 import torch.nn.functional as F
-from sgl_kernel import bmm_fp8
+from sgl_kernel_sycl import bmm_fp8
 
 
 def to_float8(x, dtype=torch.float8_e4m3fn):

@@ -5,7 +5,7 @@ import pytest
 import torch
 import triton
 import triton.language as tl
-from sgl_kernel import sgl_per_token_group_quant_fp8, sgl_per_token_group_quant_int8
+from sgl_kernel_sycl import sgl_per_token_group_quant_fp8, sgl_per_token_group_quant_int8
 
 from sglang.srt.utils import is_hip
 

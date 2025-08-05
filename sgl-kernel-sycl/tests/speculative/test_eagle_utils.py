@@ -1,7 +1,7 @@
 import pytest
 import torch
 import torch.nn.functional as F
-from sgl_kernel import verify_tree_greedy
+from sgl_kernel_sycl import verify_tree_greedy
 
 
 def test_verify_tree_greedy():

@@ -5,7 +5,7 @@ import socket
 import unittest
 from typing import Any, List, Optional
 
-import sgl_kernel.allreduce as custom_ops
+import sgl_kernel_sycl.allreduce as custom_ops
 import torch
 import torch.distributed as dist
 from torch.distributed import ProcessGroup

@@ -4,7 +4,7 @@ from typing import List, Tuple
 import torch
 import triton
 import triton.testing
-from sgl_kernel import awq_dequantize
+from sgl_kernel_sycl import awq_dequantize
 from vllm import _custom_ops as ops
 
 
@@ -23,7 +23,7 @@ def sglang_awq_dequantize(
 
 def calculate_diff(qweight_row: int, qweight_col: int):
     """Calculate difference between VLLM and SGLang implementations."""
-    device = torch.device("cuda")
+    device = torch.device("xpu")
     qweight = torch.randint(
         0,
         torch.iinfo(torch.int32).max,
@@ -77,7 +77,7 @@ configs = list(itertools.product(qweight_row_range, qweight_cols_range))
 )
 def benchmark(qweight_row, qweight_col, provider):
     dtype = torch.float16
-    device = torch.device("cuda")
+    device = torch.device("xpu")
     qweight = torch.randint(
         0,
         torch.iinfo(torch.int32).max,

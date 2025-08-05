@@ -1,6 +1,6 @@
 import pytest
 import torch
-from sgl_kernel import cutlass_scaled_fp4_mm, scaled_fp4_quant
+from sgl_kernel_sycl import cutlass_scaled_fp4_mm, scaled_fp4_quant
 
 skip_condition = torch.cuda.get_device_capability() < (10, 0)
 

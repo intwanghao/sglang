@@ -1,6 +1,6 @@
 import pytest
 import torch
-from sgl_kernel.kvcacheio import (
+from sgl_kernel_sycl.kvcacheio import (
     transfer_kv_all_layer,
     transfer_kv_all_layer_mla,
     transfer_kv_per_layer,

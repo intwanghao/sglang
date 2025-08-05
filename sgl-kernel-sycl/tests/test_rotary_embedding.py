@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pytest
 import torch
-from sgl_kernel import apply_rope_with_cos_sin_cache_inplace
+from sgl_kernel_sycl import apply_rope_with_cos_sin_cache_inplace
 
 
 # vLLM torch native

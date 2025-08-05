@@ -2,7 +2,7 @@ import itertools
 
 import torch
 import triton
-from sgl_kernel import ep_moe_silu_and_mul
+from sgl_kernel_sycl import ep_moe_silu_and_mul
 
 from sglang.srt.layers.moe.ep_moe.kernels import silu_and_mul_triton_kernel
 
@@ -17,8 +17,8 @@ configs = list(itertools.product(batch_size_range, hidden_size_range, block_size
         x_names=["batch_size", "hidden_size", "block_size"],
         x_vals=[list(cfg) for cfg in configs],
         line_arg="provider",
-        line_vals=["cuda", "triton"],
-        line_names=["CUDA Kernel", "Triton Kernel"],
+        line_vals=["xpu", "triton"],
+        line_names=["xpu Kernel", "Triton Kernel"],
         styles=[("green", "-"), ("orange", "-")],
         ylabel="us",
         plot_name="ep-moe-silu-and-mul-performance",
@@ -27,7 +27,7 @@ configs = list(itertools.product(batch_size_range, hidden_size_range, block_size
 )
 def benchmark(batch_size, hidden_size, block_size, provider):
     dtype = torch.bfloat16
-    device = torch.device("cuda")
+    device = torch.device("xpu")
 
     half_hidden_size = hidden_size // 2
     start_expert_id, end_expert_id = 0, 255
@@ -51,10 +51,10 @@ def benchmark(batch_size, hidden_size, block_size, provider):
         )
         return gateup_output, down_input, reorder_topk_ids, scales
 
-    if provider == "cuda":
+    if provider == "xpu":
         gateup, down, ids, scales = alloc_tensors()
 
-        def run_cuda():
+        def run_xpu():
             ep_moe_silu_and_mul(
                 gateup,
                 down,
@@ -64,7 +64,7 @@ def benchmark(batch_size, hidden_size, block_size, provider):
                 end_expert_id,
             )
 
-        ms, min_ms, max_ms = triton.testing.do_bench(run_cuda, quantiles=quantiles)
+        ms, min_ms, max_ms = triton.testing.do_bench(run_xpu, quantiles=quantiles)
 
     elif provider == "triton":
         gateup, down, ids, scales = alloc_tensors()

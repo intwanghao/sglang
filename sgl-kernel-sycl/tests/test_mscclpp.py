@@ -5,7 +5,7 @@ import unittest
 from enum import IntEnum
 from typing import Any
 
-import sgl_kernel.allreduce as custom_ops
+import sgl_kernel_sycl.allreduce as custom_ops
 import torch
 import torch.distributed as dist
 

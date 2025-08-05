@@ -4,7 +4,7 @@ import itertools
 
 import torch
 import triton
-from sgl_kernel import (
+from sgl_kernel_sycl import (
     int8_scaled_mm,
     qserve_w4a8_per_chn_gemm,
     qserve_w4a8_per_group_gemm,
@@ -82,37 +82,37 @@ WEIGHT_SHAPES = {
 def benchmark(batch_size, provider, N, K):
     M = batch_size
     # For W8A8
-    a = to_int8(torch.randn((M, K), device="cuda") * 5)
-    b = to_int8(torch.randn((N, K), device="cuda").t() * 5)
+    a = to_int8(torch.randn((M, K), device="xpu") * 5)
+    b = to_int8(torch.randn((N, K), device="xpu").t() * 5)
     a_fp16 = a.to(torch.float16)
     b_fp16 = b.to(torch.float16)
-    scale_a = torch.randn((M,), device="cuda", dtype=torch.float32)
-    scale_b = torch.randn((N,), device="cuda", dtype=torch.float32)
+    scale_a = torch.randn((M,), device="xpu", dtype=torch.float32)
+    scale_b = torch.randn((N,), device="xpu", dtype=torch.float32)
 
     # For Qserve W4A8 per channel
     a_qserve_chn = a
     # two int4s pack into one int8
-    b_qserve_chn = to_int8(torch.randn((N, K // 2), device="cuda") * 5)
+    b_qserve_chn = to_int8(torch.randn((N, K // 2), device="xpu") * 5)
     # b_qserve_chn = b.t().contiguous()
     scale_a_qserve_chn = scale_a.to(torch.float16)
     scale_b_qserve_chn = scale_b.to(torch.float16)
-    szero_b_qserve_chn = torch.randn((N,), device="cuda", dtype=torch.float16)
-    a_sum_qserve_chn = torch.randn((M,), device="cuda", dtype=torch.float16)
+    szero_b_qserve_chn = torch.randn((N,), device="xpu", dtype=torch.float16)
+    a_sum_qserve_chn = torch.randn((M,), device="xpu", dtype=torch.float16)
 
     # For Qserve W4A8 per group
     group_size = 128
     assert K % group_size == 0, "K must be divisible by group_size"
     a_qserve_group = a
     # two int4s pack into one int8
-    b_qserve_group = to_int8(torch.randn((N, K // 2), device="cuda") * 5)
+    b_qserve_group = to_int8(torch.randn((N, K // 2), device="xpu") * 5)
     # b_qserve_group = b.t().contiguous()
     scale_a_qserve_group = scale_a.to(torch.float16)
     scale_b_qserve_group = scale_b.to(torch.float16)
     scale_i8_b_qserve_group = to_int8(
-        torch.randn((K // group_size, N), device="cuda", dtype=torch.float16)
+        torch.randn((K // group_size, N), device="xpu", dtype=torch.float16)
     )
     zero_i8_b_qserve_group = to_int8(
-        torch.randn((K // group_size, N), device="cuda", dtype=torch.float16)
+        torch.randn((K // group_size, N), device="xpu", dtype=torch.float16)
     )
 
     quantiles = [0.5, 0.2, 0.8]

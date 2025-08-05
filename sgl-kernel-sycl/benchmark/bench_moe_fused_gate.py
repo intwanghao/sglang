@@ -4,7 +4,7 @@ import math
 import torch
 import triton
 import triton.language as tl
-from sgl_kernel import moe_fused_gate
+from sgl_kernel_sycl import moe_fused_gate
 
 from sglang.srt.layers.moe.topk import biased_grouped_topk
 
@@ -44,7 +44,7 @@ configs = [(sq,) for sq in seq_length_range]
 )
 def benchmark(seq_length, provider):
     dtype = torch.bfloat16
-    device = torch.device("cuda")
+    device = torch.device("xpu")
     num_experts, num_expert_group, topk_group, topk = 256, 8, 4, 8
 
     scores = torch.randn((seq_length, num_experts), device=device, dtype=dtype)

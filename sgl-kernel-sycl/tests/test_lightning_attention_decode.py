@@ -1,6 +1,6 @@
 import pytest
 import torch
-from sgl_kernel import lightning_attention_decode
+from sgl_kernel_sycl import lightning_attention_decode
 
 
 def naive_lightning_attention_decode(q, k, v, past_kv, slope):

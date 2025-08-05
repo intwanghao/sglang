@@ -3,7 +3,7 @@ import itertools
 import pytest
 import torch
 import triton
-from sgl_kernel import topk_softmax
+from sgl_kernel_sycl import topk_softmax
 from vllm import _custom_ops as vllm_custom_ops
 
 
@@ -46,7 +46,7 @@ def sglang_topk_softmax(gating_output, topk):
 
 def calculate_diff(num_tokens, num_experts, topk):
     gating_output = torch.randn(
-        (num_tokens, num_experts), device="cuda", dtype=torch.float32
+        (num_tokens, num_experts), device="xpu", dtype=torch.float32
     )
     weights_vllm, indices_vllm = vllm_topk_softmax(gating_output.clone(), topk)
     weights_sglang, indices_sglang = sglang_topk_softmax(gating_output.clone(), topk)
@@ -88,7 +88,7 @@ configs = list(itertools.product(num_tokens_range, num_experts_range, topk_range
 def benchmark(num_tokens, num_experts, topk, provider):
 
     gating_output = torch.randn(
-        (num_tokens, num_experts), device="cuda", dtype=torch.float32
+        (num_tokens, num_experts), device="xpu", dtype=torch.float32
     )
 
     if provider == "vllm" or provider == "vllm1":

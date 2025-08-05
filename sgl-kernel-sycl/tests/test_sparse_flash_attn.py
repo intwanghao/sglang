@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 import pytest
 import torch
 from einops import rearrange, repeat
-from sgl_kernel.sparse_flash_attn import (
+from sgl_kernel_sycl.sparse_flash_attn import (
     convert_vertical_slash_indexes,
     convert_vertical_slash_indexes_mergehead,
     sparse_attn_func,

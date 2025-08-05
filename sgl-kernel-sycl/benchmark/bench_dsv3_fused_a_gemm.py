@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import triton
 import triton.testing
-from sgl_kernel import dsv3_fused_a_gemm
+from sgl_kernel_sycl import dsv3_fused_a_gemm
 
 
 @triton.testing.perf_report(
@@ -26,8 +26,8 @@ def benchmark(num_tokens, impl):
     kHdOut = 2112
     M, K, N = num_tokens, kHdIn, kHdOut
 
-    mat_a = torch.randn((M, K), dtype=torch.bfloat16, device="cuda").contiguous()
-    mat_b = torch.randn((N, K), dtype=torch.bfloat16, device="cuda").transpose(0, 1)
+    mat_a = torch.randn((M, K), dtype=torch.bfloat16, device="xpu").contiguous()
+    mat_b = torch.randn((N, K), dtype=torch.bfloat16, device="xpu").transpose(0, 1)
 
     quantiles = [0.5, 0.2, 0.8]
 

@@ -1,7 +1,7 @@
 # Adapted from https://github.com/flashinfer-ai/flashinfer/blob/93e1a2634e22355b0856246b032b285ad1d1da6b/tests/test_sampling.py
 
 import pytest
-import sgl_kernel
+import sgl_kernel_sycl
 import torch
 
 
@@ -35,7 +35,7 @@ def test_top_k_top_p_joint_sampling_from_probs(batch_size, vocab_size, p):
 
     num_trails = 1000
     for _ in range(num_trails):
-        samples = sgl_kernel.top_k_top_p_sampling_from_probs(
+        samples = sgl_kernel_sycl.top_k_top_p_sampling_from_probs(
             normalized_prob,
             top_k_tensor,
             top_p_tensor,
@@ -64,7 +64,7 @@ def test_top_p_renorm_probs(batch_size, vocab_size, p):
         dim=-1, keepdim=True
     )
 
-    renorm_prob = sgl_kernel.top_p_renorm_prob(normalized_prob, p)
+    renorm_prob = sgl_kernel_sycl.top_p_renorm_prob(normalized_prob, p)
     torch.testing.assert_close(
         renorm_prob_ground_truth,
         renorm_prob,
@@ -91,7 +91,7 @@ def test_top_k_renorm_probs(batch_size, vocab_size, k):
         dim=-1, keepdim=True
     )
 
-    renorm_prob = sgl_kernel.top_k_renorm_prob(normalized_prob, k)
+    renorm_prob = sgl_kernel_sycl.top_k_renorm_prob(normalized_prob, k)
     for i in range(batch_size):
         torch.testing.assert_close(
             renorm_prob_ground_truth[i],
@@ -119,7 +119,7 @@ def test_min_p_sampling(batch_size, vocab_size, p):
 
     num_trails = 1000
     for _ in range(num_trails):
-        samples = sgl_kernel.min_p_sampling_from_probs(
+        samples = sgl_kernel_sycl.min_p_sampling_from_probs(
             normalized_prob,
             min_p_tensor,
         )

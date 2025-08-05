@@ -1,6 +1,6 @@
 import pytest
 import torch
-from sgl_kernel import apply_token_bitmask_inplace_cuda
+from sgl_kernel_sycl import apply_token_bitmask_inplace_cuda
 
 
 def test_apply_token_bitmask_inplace_kernel():

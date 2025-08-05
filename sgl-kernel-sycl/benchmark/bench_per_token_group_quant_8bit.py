@@ -4,7 +4,7 @@ from typing import Tuple
 import torch
 import triton
 import triton.language as tl
-from sgl_kernel import sgl_per_token_group_quant_fp8, sgl_per_token_group_quant_int8
+from sgl_kernel_sycl import sgl_per_token_group_quant_fp8, sgl_per_token_group_quant_int8
 
 from sglang.srt.utils import is_hip
 
@@ -147,7 +147,7 @@ def sglang_per_token_group_quant_8bit(
 
 
 def calculate_diff(batch_size, seq_len, group_size, dst_dtype):
-    device = torch.device("cuda")
+    device = torch.device("xpu")
     hidden_dim = 7168
 
     x = torch.randn(
@@ -195,7 +195,7 @@ configs = list(
     )
 )
 def benchmark(batch_size, seq_len, group_size, dst_dtype, provider):
-    device = torch.device("cuda")
+    device = torch.device("xpu")
     hidden_dim = 7168
 
     x = torch.randn(

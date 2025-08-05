@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 import deep_gemm
 import torch
-from sgl_kernel import fp8_blockwise_scaled_grouped_mm
+from sgl_kernel_sycl import fp8_blockwise_scaled_grouped_mm
 
 
 def get_m_alignment_for_contiguous_layout():
@@ -56,10 +56,10 @@ def construct_contiguous_grouped(
     group_ms = [int(expected_m_per_group) for _ in range(num_groups)]
     m = sum([ceil_div(x, alignment) * alignment for x in group_ms])
 
-    x = torch.randn((m, k), device="cuda", dtype=torch.bfloat16)
-    y = torch.randn((num_groups, n, k), device="cuda", dtype=torch.bfloat16)
-    m_indices = torch.empty(m, device="cuda", dtype=torch.int32)
-    out = torch.empty((m, n), device="cuda", dtype=torch.bfloat16)
+    x = torch.randn((m, k), device="xpu", dtype=torch.bfloat16)
+    y = torch.randn((num_groups, n, k), device="xpu", dtype=torch.bfloat16)
+    m_indices = torch.empty(m, device="xpu", dtype=torch.int32)
+    out = torch.empty((m, n), device="xpu", dtype=torch.bfloat16)
 
     start = 0
     for i, group_m in enumerate(group_ms):
@@ -74,7 +74,7 @@ def construct_contiguous_grouped(
     y_fp8 = (
         torch.empty_like(y, dtype=torch.float8_e4m3fn),
         torch.empty(
-            (num_groups, ceil_div(n, 128), k // 128), device="cuda", dtype=torch.float
+            (num_groups, ceil_div(n, 128), k // 128), device="xpu", dtype=torch.float
         ),
     )
     for i in range(num_groups):
@@ -104,18 +104,18 @@ def bench_deepgemm(
     # warmup
     for _ in range(num_warmup):
         run_deepgemm()
-    torch.cuda.synchronize()
+    torch.xpu.synchronize()
 
     # run
-    start_event = torch.cuda.Event(enable_timing=True)
-    end_event = torch.cuda.Event(enable_timing=True)
+    start_event = torch.xpu.Event(enable_timing=True)
+    end_event = torch.xpu.Event(enable_timing=True)
     latencies: list[float] = []
     start_event.record()
     for _ in range(num_run):
         run_deepgemm()
     end_event.record()
     end_event.synchronize()
-    torch.cuda.synchronize()
+    torch.xpu.synchronize()
     avg = start_event.elapsed_time(end_event) / num_run * 1000  # us
 
     return avg, m
@@ -129,7 +129,7 @@ def bench_cutlass(
     num_warmup: int,
     num_run: int,
 ) -> Tuple[float, int]:
-    device = "cuda"
+    device = "xpu"
     alignment = 16
     n_g = ceil_div(n, alignment) * alignment
     k_g = ceil_div(k, alignment) * alignment
@@ -225,17 +225,17 @@ def bench_cutlass(
     # warmup
     for _ in range(num_warmup):
         run_cutlass()
-    torch.cuda.synchronize()
+    torch.xpu.synchronize()
 
     # run
-    start_event = torch.cuda.Event(enable_timing=True)
-    end_event = torch.cuda.Event(enable_timing=True)
+    start_event = torch.xpu.Event(enable_timing=True)
+    end_event = torch.xpu.Event(enable_timing=True)
     start_event.record()
     for _ in range(num_run):
         run_cutlass()
     end_event.record()
     end_event.synchronize()
-    torch.cuda.synchronize()
+    torch.xpu.synchronize()
     avg = start_event.elapsed_time(end_event) / num_run * 1000  # us
 
     return avg, expert_offsets[-1]

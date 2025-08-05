@@ -41,27 +41,40 @@ endif()
 
 message(STATUS "IntelSYCL include dirs: ${SYCL_INCLUDE_DIR}")
 
+include(FetchContent)
+FetchContent_Declare(
+    repo-cutlass-sycl
+    GIT_REPOSITORY https://github.com/intel/cutlass-sycl.git
+    GIT_TAG        1a0980b455e83e22cbe9eece15dedf13d74c5e4e
+    GIT_SHALLOW    OFF
+)
+FetchContent_Populate(repo-cutlass-sycl)
+
+FetchContent_Declare(
+    repo-level-zero
+    GIT_REPOSITORY https://github.com/oneapi-src/level-zero.git
+    GIT_TAG        42310ca70c32588702653d86f1c624427c7710b4
+    GIT_SHALLOW    OFF
+)
+FetchContent_Populate(repo-level-zero)
+
 # clean Torch Flag
 #clear_cuda_arches(CMAKE_FLAG)
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/csrc
-    /user/wanghao2/dles252install/compiler/2025.2/include
-    /user/wanghao2/dles252install/compiler/2025.2/include/sycl
+    #/user/wanghao2/dles252install/compiler/2025.2/include
+    #/user/wanghao2/dles252install/compiler/2025.2/include/sycl
     ${PROJECT_SOURCE_DIR}/dpctinstall/dpct_header/include
     ${PROJECT_SOURCE_DIR}/build_sycl/_deps/repo-flashinfer-src/include
-    /user/wanghao2/cutlass-syclinstall/cutlass-syclinstall/include
-    /user/wanghao2/lzinstall/usr/include
-    /user/wanghao2/lzdevinstall/usr/include
+    #/user/wanghao2/cutlass-syclinstall/cutlass-syclinstall/include
+    ${repo-cutlass-sycl_SOURCE_DIR}/include
+    ${repo-cutlass-sycl_SOURCE_DIR}/tools/util/include
+    ${repo-level-zero_SOURCE_DIR}/include
 )
 
 include_directories(${SYCL_INCLUDE_DIR})
-
-link_directories(
-    /user/wanghao2/lzinstall/usr/lib
-    /user/wanghao2/lzdevinstall/usr/lib
-)
 
 set(SGL_KERNEL_CUDA_FLAGS
     "-DNDEBUG"

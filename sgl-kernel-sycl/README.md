@@ -19,12 +19,23 @@ pip3 install sgl-kernel
 ```
 ## Build from source
 
-Development build:
-
+For SYCL, Install Intel® Deep Learning Essentials version: 2025.2.0.
+Install pytorch xpu through
+```bash
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/xpu
+```
+Due to compatibility issue, need to replace libsycl in torch install directory with 2025.2 install directory.
+Reference command:
 ```bash
 cp /user/wanghao2/dles252install/compiler/2025.2/lib/libsycl.so /user/wanghao2/miniforge3/envs/syclsglang312/lib/python3.12/site-packages/torch/lib/../../../../
 cp /user/wanghao2/dles252install/compiler/2025.2/lib/libsycl.so.8 /user/wanghao2/miniforge3/envs/syclsglang312/lib/python3.12/site-packages/torch/lib/../../../../
 cp /user/wanghao2/dles252install/compiler/2025.2/lib/libsycl.so.8.0.0 /user/wanghao2/miniforge3/envs/syclsglang312/lib/python3.12/site-packages/torch/lib/../../../../
+```
+
+Development build:
+
+```bash
+
 make build
 ```
 

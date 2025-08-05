@@ -6,7 +6,7 @@ import deep_gemm
 import torch
 import triton
 from deep_gemm import get_col_major_tma_aligned_tensor
-from sgl_kernel import fp8_blockwise_scaled_mm
+from sgl_kernel_sycl import fp8_blockwise_scaled_mm
 from vllm._custom_ops import cutlass_scaled_mm as vllm_scaled_mm
 
 from sglang.srt.layers.quantization.fp8_kernel import (
@@ -68,7 +68,7 @@ def fp8_gemm_deepgemm(
     k: int,
 ):
     """DeepGEMM implementation of FP8 GEMM"""
-    out = torch.empty((m, n), device="cuda", dtype=torch.bfloat16)
+    out = torch.empty((m, n), device="xpu", dtype=torch.bfloat16)
 
     # Run DeepGEMM kernel
     deep_gemm.gemm_fp8_fp8_bf16_nt((x_fp8, x_scale), (y_fp8, y_scale), out)
@@ -99,10 +99,10 @@ def benchmark(batch_size, provider, N, K):
     fp8_info = torch.finfo(torch.float8_e4m3fn)
     fp8_max, fp8_min = fp8_info.max, fp8_info.min
 
-    a_fp32 = (torch.rand(M, K, dtype=torch.float32, device="cuda") - 0.5) * 2 * fp8_max
+    a_fp32 = (torch.rand(M, K, dtype=torch.float32, device="xpu") - 0.5) * 2 * fp8_max
     a_fp8 = a_fp32.clamp(min=fp8_min, max=fp8_max).to(torch.float8_e4m3fn)
 
-    b_fp32 = (torch.rand(N, K, dtype=torch.float32, device="cuda") - 0.5) * 2 * fp8_max
+    b_fp32 = (torch.rand(N, K, dtype=torch.float32, device="xpu") - 0.5) * 2 * fp8_max
     b_fp8 = b_fp32.clamp(min=fp8_min, max=fp8_max).to(torch.float8_e4m3fn)
 
     scale_a_group_shape = (1, 128)
@@ -110,8 +110,8 @@ def benchmark(batch_size, provider, N, K):
     scale_a_shape = scale_shape(a_fp8.shape, scale_a_group_shape)
     scale_b_shape = scale_shape(b_fp8.shape, scale_b_group_shape)
 
-    scale_a = torch.randn(scale_a_shape, device="cuda", dtype=torch.float32)
-    scale_b = torch.randn(scale_b_shape, device="cuda", dtype=torch.float32)
+    scale_a = torch.randn(scale_a_shape, device="xpu", dtype=torch.float32)
+    scale_b = torch.randn(scale_b_shape, device="xpu", dtype=torch.float32)
 
     quantiles = [0.5, 0.2, 0.8]
     if provider == "sgl-kernel":

@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 
 import pytest
 import torch
-from sgl_kernel import awq_dequantize
+from sgl_kernel_sycl import awq_dequantize
 
 
 def reverse_awq_order(t: torch.Tensor):

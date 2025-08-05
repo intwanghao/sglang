@@ -1,7 +1,7 @@
 import pytest
 import torch
 import torch.nn.functional as F
-from sgl_kernel import dsv3_router_gemm
+from sgl_kernel_sycl import dsv3_router_gemm
 
 
 @pytest.mark.parametrize("num_tokens", [i + 1 for i in range(16)])

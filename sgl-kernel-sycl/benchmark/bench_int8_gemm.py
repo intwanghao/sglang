@@ -4,7 +4,7 @@ import itertools
 
 import torch
 import triton
-from sgl_kernel import int8_scaled_mm
+from sgl_kernel_sycl import int8_scaled_mm
 from vllm._custom_ops import cutlass_scaled_mm as vllm_scaled_mm
 
 
@@ -78,11 +78,11 @@ WEIGHT_SHAPES = {
 )
 def benchmark(batch_size, provider, N, K):
     M = batch_size
-    a = to_int8(torch.randn((M, K), device="cuda") * 5)
-    b = to_int8(torch.randn((N, K), device="cuda").t() * 5)
-    scale_a = torch.randn((M,), device="cuda", dtype=torch.float32)
-    scale_b = torch.randn((N,), device="cuda", dtype=torch.float32)
-    bias = torch.randn((N,), device="cuda", dtype=torch.float16)
+    a = to_int8(torch.randn((M, K), device="xpu") * 5)
+    b = to_int8(torch.randn((N, K), device="xpu").t() * 5)
+    scale_a = torch.randn((M,), device="xpu", dtype=torch.float32)
+    scale_b = torch.randn((N,), device="xpu", dtype=torch.float32)
+    bias = torch.randn((N,), device="xpu", dtype=torch.float16)
 
     quantiles = [0.5, 0.2, 0.8]
     if provider == "sgl-kernel":

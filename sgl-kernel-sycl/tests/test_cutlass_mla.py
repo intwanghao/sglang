@@ -1,7 +1,7 @@
 import pytest
 import torch
 import torch.nn.functional as F
-from sgl_kernel import cutlass_mla_decode, cutlass_mla_get_workspace_size
+from sgl_kernel_sycl import cutlass_mla_decode, cutlass_mla_get_workspace_size
 from torch import Tensor
 
 if torch.cuda.get_device_capability() < (10, 0):

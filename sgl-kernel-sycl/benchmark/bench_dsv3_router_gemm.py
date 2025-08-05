@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import triton
 import triton.testing
-from sgl_kernel import dsv3_router_gemm
+from sgl_kernel_sycl import dsv3_router_gemm
 
 
 @triton.testing.perf_report(
@@ -25,8 +25,8 @@ def benchmark_bf16_output(num_tokens, impl):
     # M: num_tokens, K: hidden_dim, N: num_experts
     M, K, N = num_tokens, 7168, 256
 
-    mat_a = torch.randn((M, K), dtype=torch.bfloat16, device="cuda").contiguous()
-    mat_b = torch.randn((N, K), dtype=torch.bfloat16, device="cuda").contiguous()
+    mat_a = torch.randn((M, K), dtype=torch.bfloat16, device="xpu").contiguous()
+    mat_b = torch.randn((N, K), dtype=torch.bfloat16, device="xpu").contiguous()
 
     quantiles = [0.5, 0.2, 0.8]
 
@@ -67,8 +67,8 @@ def benchmark_float_output(num_tokens, impl):
     # M: num_tokens, K: hidden_dim, N: num_experts
     M, K, N = num_tokens, 7168, 256
 
-    mat_a = torch.randn((M, K), dtype=torch.bfloat16, device="cuda").contiguous()
-    mat_b = torch.randn((N, K), dtype=torch.bfloat16, device="cuda").contiguous()
+    mat_a = torch.randn((M, K), dtype=torch.bfloat16, device="xpu").contiguous()
+    mat_b = torch.randn((N, K), dtype=torch.bfloat16, device="xpu").contiguous()
 
     quantiles = [0.5, 0.2, 0.8]
 

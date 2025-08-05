@@ -6,7 +6,7 @@ import pytest
 import torch
 import triton
 import triton.language as tl
-from sgl_kernel import merge_state
+from sgl_kernel_sycl import merge_state
 
 
 def check_input(x: torch.Tensor):

@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import triton
 import triton.testing
-from sgl_kernel import sgl_per_tensor_quant_fp8
+from sgl_kernel_sycl import sgl_per_tensor_quant_fp8
 from vllm import _custom_ops as ops
 
 from sglang.srt.utils import is_hip
@@ -39,7 +39,7 @@ def sglang_scaled_fp8_quant(
 
 def calculate_diff(batch_size: int, seq_len: int):
     """Calculate difference between VLLM and SGLang implementations."""
-    device = torch.device("cuda")
+    device = torch.device("xpu")
     x = torch.rand((batch_size, seq_len), dtype=torch.float16, device=device)
 
     vllm_out, vllm_scale = vllm_scaled_fp8_quant(x)
@@ -77,7 +77,7 @@ configs = list(itertools.product(batch_size_range, seq_len_range))
 )
 def benchmark(batch_size, seq_len, provider):
     dtype = torch.float16
-    device = torch.device("cuda")
+    device = torch.device("xpu")
 
     x = torch.randn(batch_size * seq_len, 4096, device=device, dtype=dtype)
 

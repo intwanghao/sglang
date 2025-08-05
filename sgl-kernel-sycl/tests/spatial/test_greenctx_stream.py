@@ -1,7 +1,7 @@
 import pytest
 import torch
 import torch.nn.functional as F
-from sgl_kernel import create_greenctx_stream_by_value, get_sm_available
+from sgl_kernel_sycl import create_greenctx_stream_by_value, get_sm_available
 
 
 def test_green_ctx():

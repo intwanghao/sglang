@@ -1,7 +1,7 @@
 # Adapted from https://github.com/flashinfer-ai/flashinfer/blob/4e8eb1879f9c3ba6d75511e5893183bf8f289a62/tests/test_norm.py
 
 import pytest
-import sgl_kernel
+import sgl_kernel_sycl
 import torch
 
 
@@ -60,9 +60,9 @@ def test_norm(batch_size, hidden_size, dtype, specify_out):
     y_ref = llama_rms_norm(x, w)
     if specify_out:
         y = torch.empty_like(x)
-        sgl_kernel.rmsnorm(x, w, out=y)
+        sgl_kernel_sycl.rmsnorm(x, w, out=y)
     else:
-        y = sgl_kernel.rmsnorm(x, w)
+        y = sgl_kernel_sycl.rmsnorm(x, w)
 
     torch.testing.assert_close(y_ref, y, rtol=1e-3, atol=1e-3)
 
@@ -83,7 +83,7 @@ def test_fused_add_rmsnorm(batch_size, hidden_size, dtype):
 
     x_fused = x.clone()
     residual_fused = residual.clone()
-    sgl_kernel.fused_add_rmsnorm(x_fused, residual_fused, weight, eps)
+    sgl_kernel_sycl.fused_add_rmsnorm(x_fused, residual_fused, weight, eps)
 
     torch.testing.assert_close(x_fused, x_native, rtol=1e-3, atol=1e-3)
     torch.testing.assert_close(residual_fused, residual_native, rtol=1e-3, atol=1e-3)
@@ -100,9 +100,9 @@ def test_gemma_norm(batch_size, hidden_size, dtype, specify_out):
     y_ref = gemma_rms_norm(x, w)
     if specify_out:
         y = torch.empty_like(x)
-        sgl_kernel.gemma_rmsnorm(x, w, out=y)
+        sgl_kernel_sycl.gemma_rmsnorm(x, w, out=y)
     else:
-        y = sgl_kernel.gemma_rmsnorm(x, w)
+        y = sgl_kernel_sycl.gemma_rmsnorm(x, w)
 
     torch.testing.assert_close(y_ref, y, rtol=1e-3, atol=1e-3)
 
@@ -123,7 +123,7 @@ def test_gemma_fused_add_rmsnorm(batch_size, hidden_size, dtype):
 
     x_fused = x.clone()
     residual_fused = residual.clone()
-    sgl_kernel.gemma_fused_add_rmsnorm(x_fused, residual_fused, weight, eps)
+    sgl_kernel_sycl.gemma_fused_add_rmsnorm(x_fused, residual_fused, weight, eps)
 
     torch.testing.assert_close(x_fused, x_native, rtol=1e-3, atol=1e-3)
     torch.testing.assert_close(residual_fused, residual_native, rtol=1e-3, atol=1e-3)

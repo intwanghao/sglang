@@ -4,7 +4,7 @@ import itertools
 
 import torch
 import triton
-from sgl_kernel import fp8_scaled_mm as sgl_scaled_mm
+from sgl_kernel_sycl import fp8_scaled_mm as sgl_scaled_mm
 from vllm._custom_ops import cutlass_scaled_mm as vllm_scaled_mm
 from vllm._custom_ops import scaled_fp8_quant as vllm_scaled_fp8_quant
 
@@ -96,10 +96,10 @@ WEIGHT_SHAPES = {
 def benchmark(batch_size, provider, N, K):
     # M, N, K = batch_size, 4096, 8192
     M = batch_size
-    a = torch.ones((M, K), device="cuda") * 5.0
-    b = torch.ones((N, K), device="cuda") * 5.0
-    scale_a = torch.randn((M,), device="cuda", dtype=torch.float32)
-    scale_b = torch.randn((N,), device="cuda", dtype=torch.float32)
+    a = torch.ones((M, K), device="xpu") * 5.0
+    b = torch.ones((N, K), device="xpu") * 5.0
+    scale_a = torch.randn((M,), device="xpu", dtype=torch.float32)
+    scale_b = torch.randn((N,), device="xpu", dtype=torch.float32)
     a_fp8, scale_a_fp8 = vllm_scaled_fp8_quant(a, scale_a)
     b_fp8, scale_b_fp8 = vllm_scaled_fp8_quant(b, scale_b)
     b_fp8 = b_fp8.t()

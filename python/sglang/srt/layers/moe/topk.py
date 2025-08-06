@@ -35,6 +35,7 @@ from sglang.srt.utils import (
     is_cuda,
     is_hip,
     is_npu,
+    is_xpu,
 )
 
 _is_cuda = is_cuda()
@@ -43,10 +44,13 @@ _use_aiter = get_bool_env_var("SGLANG_USE_AITER") and _is_hip
 _is_cpu_amx_available = cpu_has_amx_support()
 _is_cpu = is_cpu()
 _is_npu = is_npu()
-
+_is_xpu = is_xpu()
 if _is_cuda:
     from sgl_kernel import moe_fused_gate
-
+if _is_xpu:
+    from sgl_kernel_sycl import moe_fused_gate
+if _is_xpu or _is_hip:
+    from sgl_kernel_sycl import topk_softmax
 if _is_cuda or _is_hip:
     from sgl_kernel import topk_softmax
 if _use_aiter:
@@ -493,13 +497,13 @@ def biased_grouped_topk_gpu(
     ), "routed_scaling_factor is required for biased_grouped_topk"
     # TODO: moe_fused_gate kernel is not supported for num_fused_shared_experts > 0 now.
     if (
-        _is_cuda
+        (_is_cuda or _is_xpu)
         and gating_output.shape[1] // num_expert_group
         <= 32  # moe_fused_gate kernel ensure that num_experts/num_expert_group does not exceed MAX_VPT=32 now. And when kernel can handle MAX_VPT > 32, we can remove this assertion.
         and is_power_of_two(correction_bias.shape[0])
     ):
         topk_weights, topk_ids = moe_fused_gate(
-            gating_output.to(dtype=torch.float32),
+            gating_output,
             correction_bias,
             num_expert_group,
             topk_group,

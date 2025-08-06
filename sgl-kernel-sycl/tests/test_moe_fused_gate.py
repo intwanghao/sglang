@@ -24,9 +24,13 @@ def test_moe_fused_gate_combined(seq_length, dtype, params, num_fused_shared_exp
     num_experts, num_expert_group, topk_group, topk = params
 
     torch.manual_seed(seq_length)
-    tensor = torch.rand((seq_length, num_experts)).to(dtype).xpu()
+    tensor = torch.rand(
+        (seq_length, num_experts),
+        dtype=dtype,
+        device="xpu"
+    )
     scores = tensor.clone()
-    bias = torch.rand(num_experts).to(dtype).xpu()
+    bias = torch.rand(num_experts, dtype=dtype, device="xpu")
     topk = topk + num_fused_shared_experts
 
     output, indices = moe_fused_gate(
@@ -96,4 +100,5 @@ def test_moe_fused_gate_combined(seq_length, dtype, params, num_fused_shared_exp
 
 
 if __name__ == "__main__":
+    #pytest.main(["-s", "-v",__file__])
     pytest.main([__file__])

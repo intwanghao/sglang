@@ -78,10 +78,9 @@ void moe_fused_gate_impl(
   int tidx = item_ct1.get_local_id(2);
   int64_t thread_row = item_ct1.get_group(2) * params.ROWS_PER_CTA + item_ct1.get_local_id(1) * params.ROWS_PER_WARP +
                        tidx / params.THREADS_PER_ROW;
-  if (thread_row >= num_rows) {
-    return;
-  }
-
+  //if (thread_row >= num_rows) {
+  //  return;
+  //}
   // Calculate topk_excluding_share_expert_fusion from topk
   int64_t topk_excluding_share_expert_fusion = topk - num_fused_shared_experts;
 
@@ -107,31 +106,33 @@ void moe_fused_gate_impl(
 // have misaligned address issue when params.VPT < 8 and mismatch with MAX_VPT
 // AccessType<T>* row_chunk_vec_ptr = reinterpret_cast<AccessType<T>*>(&row_chunk);
 // row_chunk_vec_ptr[0] = vec_thread_read_ptr[0];
+if (thread_row < num_rows) {
 #pragma unroll
   for (int ii = 0; ii < params.VPT; ++ii) {
     row_chunk[ii] = vec_thread_read_ptr[0][ii];
     bias_chunk[ii] = vec_bias_thread_read_ptr[0][ii];
   }
-
+}
   /*
   DPCT1065:789: Consider replacing sycl::nd_item::barrier() with
   sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to global
   memory.
   */
-  item_ct1.barrier();
-
+  sycl::group_barrier(item_ct1.get_group());
+if (thread_row < num_rows) {
 ////////////////////// Sigmoid //////////////////////
 #pragma unroll
   for (int ii = 0; ii < params.VPT; ++ii) {
     row_chunk[ii] = static_cast<T>(1.0f / (1.0f + sycl::native::exp(-float(row_chunk[ii]))));
   }
+}
   /*
   DPCT1065:790: Consider replacing sycl::nd_item::barrier() with
   sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to global
   memory.
   */
-  item_ct1.barrier();
-
+  sycl::group_barrier(item_ct1.get_group());
+if (thread_row < num_rows) {
 ////////////////////// Add Bias //////////////////////
 #pragma unroll
   for (int ii = 0; ii < params.VPT; ++ii) {
@@ -202,17 +203,18 @@ void moe_fused_gate_impl(
       }
     }
   }
-
+}
   /*
   DPCT1065:791: Consider replacing sycl::nd_item::barrier() with
   sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to global
   memory.
   */
-  item_ct1.barrier();
+  sycl::group_barrier(item_ct1.get_group());
 
   ////////////////////// Topk //////////////////////
   float output_sum = 0.0f;
   for (int k_idx = 0; k_idx < topk_excluding_share_expert_fusion; ++k_idx) {
+    if (thread_row < num_rows) {
     // local argmax
     T max_val = bias_chunk[0];
     int expert = first_elt_read_by_thread;
@@ -286,9 +288,10 @@ void moe_fused_gate_impl(
     sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
     global memory.
     */
-    item_ct1.barrier();
+    }
+    sycl::group_barrier(item_ct1.get_group());
   }
-
+if (thread_row < num_rows) {
   if (thread_group_idx == 0 && num_fused_shared_experts > 0) {
     int64_t last_idx = topk * thread_row + topk_excluding_share_expert_fusion;
     int64_t expert_offset = 0;
@@ -307,13 +310,14 @@ void moe_fused_gate_impl(
       }
     }
   }
+}
   /*
   DPCT1065:792: Consider replacing sycl::nd_item::barrier() with
   sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to global
   memory.
   */
-  item_ct1.barrier();
-
+  sycl::group_barrier(item_ct1.get_group());
+if (thread_row < num_rows) {
   ////////////////////// Rescale Output //////////////////////
   if (thread_group_idx == 0) {
 #pragma unroll
@@ -322,6 +326,7 @@ void moe_fused_gate_impl(
       output_ptr[idx] = output_ptr[idx] / output_sum;
     }
   }
+}
 }
 
 //------------------------------------------------------------------------------

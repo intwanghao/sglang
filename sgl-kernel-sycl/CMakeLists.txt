@@ -111,6 +111,19 @@ list(APPEND SGL_KERNEL_CUDA_FLAGS
     "-ffast-math"
 )
 
+if (SGL_KERNEL_ENABLE_BF16)
+    list(APPEND SGL_KERNEL_CUDA_FLAGS
+        "-DFLASHINFER_ENABLE_BF16"
+    )
+endif()
+
+if (SGL_KERNEL_ENABLE_FP8)
+    list(APPEND SGL_KERNEL_CUDA_FLAGS
+        "-DFLASHINFER_ENABLE_FP8"
+        "-DFLASHINFER_ENABLE_FP8_E4M3"
+        "-DFLASHINFER_ENABLE_FP8_E5M2"
+    )
+endif()
 
 set(SOURCES
     "csrc/moe/moe_align_kernel.dp.cpp"

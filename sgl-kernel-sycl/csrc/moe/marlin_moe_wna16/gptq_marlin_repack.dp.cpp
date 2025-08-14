@@ -336,11 +336,11 @@ gptq_marlin_repack(torch::Tensor& b_q_weight, torch::Tensor& perm, int64_t size_
   TORCH_CHECK(b_q_weight.size(1) == size_n, "b_q_weight.size(1) = ", b_q_weight.size(1), " is not size_n = ", size_n);
 
   // Verify device and strides
-  TORCH_CHECK(b_q_weight.device().is_cuda(), "b_q_weight is not on GPU");
+  TORCH_CHECK(b_q_weight.device().is_xpu(), "b_q_weight is not on GPU");
   TORCH_CHECK(b_q_weight.is_contiguous(), "b_q_weight is not contiguous");
   TORCH_CHECK(b_q_weight.dtype() == at::kInt, "b_q_weight type is not kInt");
 
-  TORCH_CHECK(perm.device().is_cuda(), "perm is not on GPU");
+  TORCH_CHECK(perm.device().is_xpu(), "perm is not on GPU");
   TORCH_CHECK(perm.is_contiguous(), "perm is not contiguous");
   TORCH_CHECK(perm.dtype() == at::kInt, "perm type is not at::kInt");
 

@@ -429,8 +429,9 @@ inline void scale_float(float* c, typename ScalarType<scalar_t>::FragS& s) {
 }
 
 // Wait until barrier reaches `count`, then lock for current threadblock.
-inline void barrier_acquire(int* lock, int count) {
+inline void barrier_acquire(int* lock, int count, bool run) {
   auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+if(run) {
   if (item_ct1.get_local_id(2) == 0) {
     int state = -1;
     do
@@ -444,11 +445,12 @@ inline void barrier_acquire(int* lock, int count) {
   sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to global
   memory.
   */
+}
   item_ct1.barrier();
 }
 
 // Release barrier and increment visitation count.
-inline void barrier_release(int* lock, bool reset = false) {
+inline void barrier_release(int* lock, bool reset = false, bool run = true) {
   /*
   DPCT1065:667: Consider replacing sycl::nd_item::barrier() with
   sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to global
@@ -456,22 +458,25 @@ inline void barrier_release(int* lock, bool reset = false) {
   */
   auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
   item_ct1.barrier();
+  int contribute = (run && !reset) ? 1 : 0;
+  int sum = sycl::reduce_over_group(item_ct1.get_group(), contribute, sycl::plus<>());
+  if(run) {
   if (item_ct1.get_local_id(2) == 0) {
     if (reset) {
       lock[0] = 0;
-      return;
     }
-    int val = 1;
     // Make sure that all writes since acquiring this barrier are visible
     // globally, while releasing the barrier.
     sycl::atomic_fence(sycl::memory_order::acq_rel, sycl::memory_scope::device);
-    *lock = sycl::reduce_over_group(item_ct1.get_group(), val, sycl::plus<>());
+    *lock = sum;
+  }
   }
 }
 
 // Wait until value of lock to be negative, and then add 1
-inline void wait_negative_and_add(int* lock) {
+inline void wait_negative_and_add(int* lock, bool run) {
   auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+  if(run) {
   if (item_ct1.get_local_id(2) == 0) {
     int state = 0;
     do
@@ -480,6 +485,7 @@ inline void wait_negative_and_add(int* lock) {
       state = *((uint32_t*)(uintptr_t)lock);
     while (state >= 0);
     dpct::atomic_fetch_add<sycl::access::address_space::generic_space>(lock, 1);
+  }
   }
   /*
   DPCT1065:668: Consider replacing sycl::nd_item::barrier() with
@@ -508,11 +514,6 @@ template <
                                            // with a separate quantization scale
     const bool is_zp_float                 // is zero point of float16 type?
     >
-/*
-DPCT1110:4: The total declared local variable size in device function Marlin exceeds 128 bytes and may cause high
-register pressure. Consult with your hardware vendor to find the total register size available and adjust the code, or
-use smaller sub-group size to avoid high register pressure.
-*/
 void Marlin(
     const sycl::int4* __restrict__ A,                        // fp16 input matrix of shape mxk
     const sycl::int4* __restrict__ B,                        // 4bit quantized weight matrix of shape kxn
@@ -634,8 +635,9 @@ void Marlin(
 
   // read moe block data given block_id
   // block_sorted_ids / block_num_valid_tokens / block_topk_weights
-  auto read_moe_block_data = [&](int block_id) {
+  auto read_moe_block_data = [&](int block_id, bool run) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+    if(run) {
     block_num_valid_tokens = moe_block_size;
 #pragma unroll
     for (int i = 0; i < moe_block_size / 4; i++) {
@@ -651,13 +653,14 @@ void Marlin(
       }
       if (block_num_valid_tokens != moe_block_size) break;
     }
-
+    }
     /*
     DPCT1065:655: Consider replacing sycl::nd_item::barrier() with
     sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
     global memory.
     */
     item_ct1.barrier();
+    if(run) {
     int tid4 = item_ct1.get_local_id(2) / 4;
     if (item_ct1.get_local_id(2) % 4 == 0 && item_ct1.get_local_id(2) < block_num_valid_tokens) {
       sh_block_sorted_ids_int4[tid4] =
@@ -671,6 +674,7 @@ void Marlin(
         }
       }
     }
+    }
     /*
     DPCT1065:656: Consider replacing sycl::nd_item::barrier() with
     sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
@@ -681,8 +685,9 @@ void Marlin(
 
   // when move to next moe block, find the next block_id and expert_id
   // and then read moe block data
-  auto update_next_moe_block_data = [&]() {
-    if (par_id >= parallel) return;
+  auto update_next_moe_block_data = [&](bool run) {
+    if(run) {
+    if (par_id < parallel) {
 
     old_expert_id = expert_id;
     if (num_invalid_blocks > 0) {
@@ -711,13 +716,15 @@ void Marlin(
     if constexpr (has_act_order) {
       g_idx += (expert_id - old_expert_id) * prob_k;
     }
-
-    read_moe_block_data(block_id);
+    }
+    }
+    read_moe_block_data(block_id, (par_id < parallel) && run);
   };
 
   // Compute all information about the current slice which is required for
   // synchronization.
-  auto init_slice = [&](bool first_init = false) {
+  auto init_slice = [&](bool first_init = false, bool run = true) {
+    if(run) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     slice_iters = iters * (item_ct1.get_group(2) + 1) - (k_tiles * slice_col_par + slice_row);
     if (slice_iters < 0 || slice_col_par >= n_tiles * parallel) slice_iters = 0;
@@ -766,19 +773,24 @@ void Marlin(
       sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
       global memory.
       */
-      item_ct1.barrier();
+    }
+    }
+    item_ct1.barrier();
+    if(run) {
+    if (first_init && use_atomic_add && slice_count > 1 && slice_idx == 0) {
       if (item_ct1.get_local_id(2) == 0) locks[locks_off] = 1 - slice_count;
     }
 
     if (slice_col == n_tiles) {
       slice_col = 0;
       par_id++;
-      update_next_moe_block_data();
     }
+    }
+    update_next_moe_block_data((slice_col == n_tiles) && run);
   };
 
-  update_next_moe_block_data();
-  init_slice(true);
+  update_next_moe_block_data(true);
+  init_slice(true, true);
 
   // A sizes/strides
 
@@ -1119,12 +1131,14 @@ void Marlin(
   };
 
   // Wait until the next thread tile has been loaded to shared memory.
-  auto wait_for_stage = [&]() {
+  auto wait_for_stage = [&](bool run) {
     // We only have `stages - 2` active fetches since we are double buffering
     // and can only issue the next fetch when it is guaranteed that the previous
     // shared memory load is fully complete (as it may otherwise be
     // overwritten).
+    if(run) {
     cp_async_wait<stages - 2>();
+    }
     /*
     DPCT1065:658: Consider replacing sycl::nd_item::barrier() with
     sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
@@ -1460,10 +1474,10 @@ void Marlin(
   // number of warps while keeping the n dimension of a tile reasonable, we have
   // multiple warps that accumulate their partial sums of the same output
   // location; which we have to reduce over in the end. We do in shared memory.
-  auto thread_block_reduce = [&]() {
+  auto thread_block_reduce = [&](bool run) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     constexpr int red_off = threads / b_sh_stride_threads / 2;
-    if (red_off >= 1) {
+    
       int red_idx = item_ct1.get_local_id(2) / b_sh_stride_threads;
       constexpr int red_sh_stride = b_sh_stride_threads * 4 * 2;
       constexpr int red_sh_delta = b_sh_stride_threads;
@@ -1473,11 +1487,15 @@ void Marlin(
       // Parallel logarithmic shared memory reduction. We make sure to avoid any
       // unnecessary read or write iterations, e.g., for two warps we write only
       // once by warp 1 and read only once by warp 0.
-
+      // thread_m_blocks is const expr
 #pragma unroll
       for (int m_block = 0; m_block < thread_m_blocks; m_block++) {
+        
 #pragma unroll
         for (int i = red_off; i > 0; i /= 2) {
+        if(run) {
+        if (red_off >= 1) {
+          //
           if (i <= red_idx && red_idx < 2 * i) {
 #pragma unroll
             for (int j = 0; j < 4 * 2; j += (m_block_size_8 ? 2 : 1)) {
@@ -1497,8 +1515,13 @@ void Marlin(
           sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
           global memory.
           */
-          item_ct1.barrier();
+          
         }
+        }
+        item_ct1.barrier();
+        }
+        if(run) {
+        if (red_off >= 1) {
         if (red_idx == 0) {
 #pragma unroll
           for (int i = 0; i < 4 * 2; i += (m_block_size_8 ? 2 : 1)) {
@@ -1513,9 +1536,11 @@ void Marlin(
         sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
         global memory.
         */
+        }
+        }
         item_ct1.barrier();
       }
-    }
+    //}
   };
 
   // Since multiple threadblocks may process parts of the same column slice, we
@@ -1665,7 +1690,7 @@ void Marlin(
   // Write out the reduce final result in the correct layout. We only actually
   // reshuffle matrix fragments in this step, the reduction above is performed
   // in fragment layout.
-  auto write_result = [&]() {
+  auto write_result = [&](bool run) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     int c_gl_stride = prob_n / 8;
     constexpr int c_sh_stride = 2 * thread_n_blocks + 1;
@@ -1674,8 +1699,12 @@ void Marlin(
 
     int c_gl_wr = c_gl_stride * (item_ct1.get_local_id(2) / (2 * thread_n_blocks)) +
                   (item_ct1.get_local_id(2) % (2 * thread_n_blocks));
-    c_gl_wr += (2 * thread_n_blocks) * slice_col;
     int c_sh_wr;
+    int c_sh_rd = c_sh_stride * (item_ct1.get_local_id(2) / (2 * thread_n_blocks)) +
+                  (item_ct1.get_local_id(2) % (2 * thread_n_blocks));
+    if(run) {
+    c_gl_wr += (2 * thread_n_blocks) * slice_col;
+    
     if constexpr (m_block_size_8) {
       c_sh_wr = (8 * c_sh_stride) * ((item_ct1.get_local_id(2) % 32) % 4 * 2) + (item_ct1.get_local_id(2) % 32) / 4;
       c_sh_wr += 64 * (item_ct1.get_local_id(2) / 32);
@@ -1684,8 +1713,7 @@ void Marlin(
       c_sh_wr += 32 * (item_ct1.get_local_id(2) / 32);
     }
 
-    int c_sh_rd = c_sh_stride * (item_ct1.get_local_id(2) / (2 * thread_n_blocks)) +
-                  (item_ct1.get_local_id(2) % (2 * thread_n_blocks));
+
 
     // We first reorder in shared memory to guarantee the most efficient final
     // global write patterns
@@ -1735,13 +1763,14 @@ void Marlin(
         c_sh_wr += 16 * (4 * c_sh_stride);
       }
     }
+    }
     /*
     DPCT1065:661: Consider replacing sycl::nd_item::barrier() with
     sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
     global memory.
     */
     item_ct1.barrier();
-
+    if(run) {
 #pragma unroll
     for (int i = 0; i < div_ceil(16 * thread_m_blocks, threads / (2 * thread_n_blocks)); i++) {
       int row = c_gl_wr / c_gl_stride;
@@ -1786,12 +1815,14 @@ void Marlin(
     sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
     global memory.
     */
+    
+    }
     item_ct1.barrier();
   };
 
   // Start global fetch and register load pipelines.
-  auto start_pipes = [&]() {
-
+  auto start_pipes = [&](bool run) {
+    if(run) {
 #pragma unroll
     for (int i = 0; i < stages - 1; i++) {
       if (has_act_order && i == 0) {
@@ -1812,45 +1843,64 @@ void Marlin(
     }
 
     zero_accums();
-    wait_for_stage();
+    }
+    wait_for_stage(run);
+    if(run) {
     init_same_group(0);
     fetch_to_registers(0, 0);
     fetch_scales_to_registers(0, 0);
     fetch_zp_to_registers(0, 0);
     a_gl_rd += a_gl_rd_delta_o * (stages - 1);
     slice_k_start_shared_fetch += tb_k * (stages - 1);
+    }
   };
-  if (slice_iters) {
-    start_pipes();
-  }
+
+  start_pipes(slice_iters);
+
 
   // Main loop.
-  while (slice_iters) {
+  int max_slice_iters =  sycl::reduce_over_group(sycl::ext::oneapi::this_work_item::get_nd_item<3>().get_group(), slice_iters, sycl::maximum<>());
+  //while (slice_iters) {
+  while (max_slice_iters) {
     // We unroll over both the global fetch and the register load pipeline to
     // ensure all shared memory accesses are static. Note that both pipelines
     // have even length meaning that the next iteration will always start at
     // index 0.
+    int origin_slice_iters = slice_iters;
 
 #pragma unroll
     for (int pipe = 0; pipe < stages;) {
 #pragma unroll
+      // b_sh_wr_iters is const expr
       for (int k = 0; k < b_sh_wr_iters; k++) {
+        if(origin_slice_iters) {
         fetch_to_registers(k + 1, pipe % stages);
         fetch_scales_to_registers(k + 1, pipe);
         fetch_zp_to_registers(k + 1, pipe);
         if (k == b_sh_wr_iters - 2) {
+          // all pass by value
           fetch_to_shared((pipe + stages - 1) % stages, pipe, slice_iters >= stages);
           pipe++;
-          wait_for_stage();
+        }
+        }
+        wait_for_stage(origin_slice_iters && (k == b_sh_wr_iters - 2));
+        if(origin_slice_iters) {
+        if (k == b_sh_wr_iters - 2) {
+          // all pass by value
           init_same_group(pipe % stages);
         }
+        // all pass by value
         matmul(k);
+        }
       }
+      if(origin_slice_iters) {
       slice_iters--;
       if (slice_iters == 0) {
         break;
       }
+      }
     }
+    if(origin_slice_iters) {
     a_remaining_load_count_in_slice = 0;
 
     a_gl_rd += a_gl_rd_delta_o * stages;
@@ -1871,16 +1921,18 @@ void Marlin(
         sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
         global memory.
         */
-        item_ct1.barrier();
+        
       }
     }
-
+    }
+    item_ct1.barrier();
+    bool last = slice_idx == slice_count - 1;
+    if(origin_slice_iters) {
     // Process results and, if necessary, proceed to the next column slice.
     // While this pattern may not be the most readable, other ways of writing
     // the loop seemed to noticeably worse performance after compilation.
     if (slice_iters == 0) {
       cp_async_wait<0>();
-      bool last = slice_idx == slice_count - 1;
       // For per-column scales, we only fetch them here in the final step before
       // write-out
       if constexpr (!has_act_order && group_blocks == -1 && !has_zp) {
@@ -1891,8 +1943,11 @@ void Marlin(
           cp_async_fence();
         }
       }
-
-      thread_block_reduce();
+    }
+    }
+    thread_block_reduce(origin_slice_iters && (slice_iters == 0));
+    if(origin_slice_iters) {
+    if (slice_iters == 0) {
       if constexpr (!has_act_order && group_blocks == -1 && !has_zp) {
         if (w_type.size_bits() == 8 || (last || use_atomic_add)) {
           cp_async_wait<0>();
@@ -1901,7 +1956,15 @@ void Marlin(
           sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
           global memory.
           */
-          item_ct1.barrier();
+        }
+      }
+    }
+    }
+    item_ct1.barrier();
+    if(origin_slice_iters) {
+    if (slice_iters == 0) {
+      if constexpr (!has_act_order && group_blocks == -1 && !has_zp) {
+        if (w_type.size_bits() == 8 || (last || use_atomic_add)) {
           if (item_ct1.get_local_id(2) / 32 < thread_n_blocks / 4) {
             reinterpret_cast<sycl::int4*>(&frag_s)[0] = sh_s[s_sh_rd + 0];
             reinterpret_cast<sycl::int4*>(&frag_s)[1] = sh_s[s_sh_rd + 4];
@@ -1938,27 +2001,40 @@ void Marlin(
           }
         }
       }
-
+    }
+    }
+    barrier_acquire(&locks[locks_off], slice_idx,  origin_slice_iters && (slice_iters == 0) && (slice_count > 1 && !use_atomic_add));
+    if(origin_slice_iters) {
+    if (slice_iters == 0) {
       if (slice_count > 1 && !use_atomic_add) {
         // only globally reduce if there is more than one block in a slice
-        barrier_acquire(&locks[locks_off], slice_idx);
         if (use_fp32_reduce) {
           global_reduce_fp32(slice_idx == 0, last);
         } else {
           global_reduce_fp16(slice_idx == 0, last);
         }
-        barrier_release(&locks[locks_off], last);
       }
-      if (use_atomic_add && slice_count > 1 && slice_idx != 0) wait_negative_and_add(&locks[locks_off]);
-      if (last || use_atomic_add)
+    }
+    }
+    barrier_release(&locks[locks_off], last, origin_slice_iters && (slice_iters == 0) && (slice_count > 1 && !use_atomic_add));
+    wait_negative_and_add(&locks[locks_off],  origin_slice_iters && (slice_iters == 0) && ( use_atomic_add && slice_count > 1 && slice_idx != 0));
+      //if (last || use_atomic_add)
         // only the last block in a slice actually writes the result
-        write_result();
+    
+    write_result(origin_slice_iters && (slice_iters == 0) && (last || use_atomic_add));
+    if(origin_slice_iters) {
+    if (slice_iters == 0) {
+      
       if (slice_row) a_remaining_load_count_in_slice = stages;
       slice_row = 0;
       slice_col_par++;
       slice_col++;
       is_first_matmul_in_slice = true;
-      init_slice();
+    }
+    }
+    init_slice(origin_slice_iters && slice_iters == 0);
+    if(origin_slice_iters) {
+    if (slice_iters == 0) {
       if (slice_iters) {
         a_gl_rd =
             a_gl_stride * (item_ct1.get_local_id(2) / a_gl_rd_delta_o) + (item_ct1.get_local_id(2) % a_gl_rd_delta_o);
@@ -1982,10 +2058,11 @@ void Marlin(
           s_gl_rd = s_sh_stride * slice_col + item_ct1.get_local_id(2);
           zp_gl_rd = zp_sh_stride * slice_col + item_ct1.get_local_id(2);
         }
-
-        start_pipes();
       }
     }
+  }
+  start_pipes(origin_slice_iters && (slice_iters == 0) && slice_iters);
+  max_slice_iters =  sycl::reduce_over_group(sycl::ext::oneapi::this_work_item::get_nd_item<3>().get_group(), slice_iters, sycl::maximum<>());
   }
 }
 

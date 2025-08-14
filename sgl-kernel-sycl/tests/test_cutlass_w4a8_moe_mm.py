@@ -245,7 +245,10 @@ def ref_grouped_gemm(c, a, a_scale, w, w_scale, num_experts, experts_selection_r
         token_idx = torch.where(experts_selection_result == i)[0]
         if len(token_idx) == 0:
             continue
-        a = a_q[token_idx]
+        #a = a_q[token_idx]
+        idx_cpu = token_idx.detach().to("cpu")
+        a_cpu   = a_q.detach().to("cpu")
+        a = a_cpu.index_select(0, idx_cpu).to(device="xpu", dtype=a_q.dtype)
 
         ref_w_scale_repeat = w_scale[i].repeat_interleave(128, dim=1).to(float)
         ref_w = (w[i].to(float) * ref_w_scale_repeat).to(dtype)
@@ -257,4 +260,4 @@ def ref_grouped_gemm(c, a, a_scale, w, w_scale, num_experts, experts_selection_r
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    pytest.main(["-s", "-v", __file__])

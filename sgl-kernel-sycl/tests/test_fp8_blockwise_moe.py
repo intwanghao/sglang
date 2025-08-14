@@ -258,4 +258,5 @@ def test_fp8_blockwise_scaled_grouped_mm(num_experts, out_dtype, use_custom_kern
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    #pytest.main([__file__])
+    pytest.main(["-s", "-v", __file__])

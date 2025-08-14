@@ -149,7 +149,7 @@ torch::Tensor moe_wna16_marlin_gemm(
     bool use_atomic_add,
     bool use_fp32_reduce,
     bool is_zp_float) {
-  TORCH_CHECK_NOT_IMPLEMENTED(false, "marlin_gemm(..) requires CUDA_ARCH >= 8.0");
+  TORCH_CHECK_NOT_IMPLEMENTED(false, "marlin_gemm(..) requires xpu_ARCH >= 8.0");
   return torch::empty({1, 1});
 }
 
@@ -158,11 +158,6 @@ torch::Tensor moe_wna16_marlin_gemm(
 // For a given "a" of size [M,K] performs a permutation of the K columns based
 // on the given "perm" indices.
 template <int moe_block_size>
-/*
-DPCT1110:645: The total declared local variable size in device function permute_cols_kernel exceeds 128 bytes and may
-cause high register pressure. Consult with your hardware vendor to find the total register size available and adjust the
-code, or use smaller sub-group size to avoid high register pressure.
-*/
 void permute_cols_kernel(
     sycl::int4 const* __restrict__ a_int4_ptr,
     int const* __restrict__ perm_int_ptr,
@@ -784,7 +779,7 @@ void marlin_mm(
 
   int max_shared_mem = 0;
   /*
-  DPCT1019:803: local_mem_size in SYCL is not a complete equivalent of cudaDevAttrMaxSharedMemoryPerBlockOptin in CUDA.
+  DPCT1019:803: local_mem_size in SYCL is not a complete equivalent of cudaDevAttrMaxSharedMemoryPerBlockOptin in xpu.
   You may need to adjust the code.
   */
   max_shared_mem = dpct::get_device(dev).get_local_mem_size();
@@ -908,7 +903,7 @@ void marlin_mm(
   }
 
   /*
-  DPCT1026:804: The call to cudaFuncSetAttribute was removed because SYCL currently does not support corresponding
+  DPCT1026:804: The call to xpuFuncSetAttribute was removed because SYCL currently does not support corresponding
   setting.
   */
   // avoid ">>>" being formatted to "> > >"
@@ -981,13 +976,13 @@ torch::Tensor moe_wna16_marlin_gemm(
   TORCH_CHECK(size_n == actual_size_n, "size_n = ", size_n, ", actual_size_n = ", actual_size_n);
 
   // Verify device and strides
-  TORCH_CHECK(a.device().is_cuda(), "A is not on GPU");
+  TORCH_CHECK(a.device().is_xpu(), "A is not on GPU");
   TORCH_CHECK(a.is_contiguous(), "A is not contiguous");
 
-  TORCH_CHECK(b_q_weight.device().is_cuda(), "b_q_weight is not on GPU");
+  TORCH_CHECK(b_q_weight.device().is_xpu(), "b_q_weight is not on GPU");
   TORCH_CHECK(b_q_weight.is_contiguous(), "b_q_weight is not contiguous");
 
-  TORCH_CHECK(b_scales.device().is_cuda(), "b_scales is not on GPU");
+  TORCH_CHECK(b_scales.device().is_xpu(), "b_scales is not on GPU");
   TORCH_CHECK(b_scales.is_contiguous(), "b_scales is not contiguous");
 
   // thread_k: `k` size of a thread_tile in `weights` (can usually be left as
@@ -1006,7 +1001,7 @@ torch::Tensor moe_wna16_marlin_gemm(
   torch::Tensor c;
   if (c_or_none.has_value()) {
     c = c_or_none.value();
-    TORCH_CHECK(c.device().is_cuda(), "c is not on GPU");
+    TORCH_CHECK(c.device().is_xpu(), "c is not on GPU");
     TORCH_CHECK(c.is_contiguous(), "c is not contiguous");
     TORCH_CHECK(
         c.size(0) == size_m * top_k, "Shape mismatch: c.size(0) = ", c.size(0), ", size_m * topk = ", size_m * top_k);
@@ -1043,9 +1038,9 @@ torch::Tensor moe_wna16_marlin_gemm(
     g_idx = g_idx_or_none.value();
     perm = perm_or_none.value();
 
-    TORCH_CHECK(g_idx.device().is_cuda(), "g_idx is not on GPU");
+    TORCH_CHECK(g_idx.device().is_xpu(), "g_idx is not on GPU");
     TORCH_CHECK(g_idx.is_contiguous(), "g_idx is not contiguous");
-    TORCH_CHECK(perm.device().is_cuda(), "perm is not on GPU");
+    TORCH_CHECK(perm.device().is_xpu(), "perm is not on GPU");
     TORCH_CHECK(perm.is_contiguous(), "perm is not contiguous");
 
     // Verify g_idx and perm
@@ -1088,7 +1083,7 @@ torch::Tensor moe_wna16_marlin_gemm(
   torch::Tensor b_zeros;
   if (b_zeros_or_none.has_value()) {
     b_zeros = b_zeros_or_none.value();
-    TORCH_CHECK(b_zeros.device().is_cuda(), "b_zeros is not on GPU");
+    TORCH_CHECK(b_zeros.device().is_xpu(), "b_zeros is not on GPU");
     TORCH_CHECK(b_zeros.is_contiguous(), "b_zeros is not contiguous");
   } else {
     b_zeros = torch::empty({0}, options);

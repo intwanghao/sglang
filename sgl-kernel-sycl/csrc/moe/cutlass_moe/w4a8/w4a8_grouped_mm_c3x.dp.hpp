@@ -52,7 +52,8 @@ using ElementD = ElementC;         // Default output type (FP16)
 using ProblemShape = cutlass::gemm::GroupProblemShape<Shape<int, int, int>>;
 
 // Architecture-specific configurations
-using ArchTag = cutlass::arch::Sm90;
+//using ArchTag = cutlass::arch::Sm90;
+using ArchTag = cutlass::arch::IntelXe;
 using OperatorClass = cutlass::arch::OpClassTensorOp;
 // constexpr int TileShapeK = 512;
 // using TileShape = Shape<_128, _32, cute::Int<TileShapeK>>;

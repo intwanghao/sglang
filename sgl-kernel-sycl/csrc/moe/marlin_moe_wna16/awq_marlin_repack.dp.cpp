@@ -263,7 +263,7 @@ torch::Tensor awq_marlin_repack(torch::Tensor& b_q_weight, int64_t size_k, int64
       pack_factor);
 
   // Verify device and strides
-  TORCH_CHECK(b_q_weight.device().is_cuda(), "b_q_weight is not on GPU");
+  TORCH_CHECK(b_q_weight.device().is_xpu(), "b_q_weight is not on GPU");
   TORCH_CHECK(b_q_weight.is_contiguous(), "b_q_weight is not contiguous");
   TORCH_CHECK(b_q_weight.dtype() == at::kInt, "b_q_weight type is not kInt");
 

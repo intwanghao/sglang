@@ -133,4 +133,4 @@ def test_awq_marlin_repack_correct(num_bits, k_tiles, n_tiles, group_size):
 if __name__ == "__main__":
     import subprocess
 
-    subprocess.call(["pytest", "--tb=short", str(__file__)])
+    subprocess.call(["pytest", "--tb=short", "-s", "-v", str(__file__)])

@@ -42,13 +42,13 @@ endif()
 message(STATUS "IntelSYCL include dirs: ${SYCL_INCLUDE_DIR}")
 
 include(FetchContent)
-FetchContent_Declare(
-    repo-cutlass-sycl
-    GIT_REPOSITORY https://github.com/intel/cutlass-sycl.git
-    GIT_TAG        1a0980b455e83e22cbe9eece15dedf13d74c5e4e
-    GIT_SHALLOW    OFF
-)
-FetchContent_Populate(repo-cutlass-sycl)
+#FetchContent_Declare(
+#    repo-cutlass-sycl
+#    GIT_REPOSITORY https://github.com/intel/cutlass-sycl.git
+#    GIT_TAG        1a0980b455e83e22cbe9eece15dedf13d74c5e4e
+#    GIT_SHALLOW    OFF
+#)
+#FetchContent_Populate(repo-cutlass-sycl)
 
 FetchContent_Declare(
     repo-level-zero
@@ -68,9 +68,9 @@ include_directories(
     #/user/wanghao2/dles252install/compiler/2025.2/include/sycl
     ${PROJECT_SOURCE_DIR}/dpctinstall/dpct_header/include
     ${PROJECT_SOURCE_DIR}/build_sycl/_deps/repo-flashinfer-src/include
-    #/user/wanghao2/cutlass-syclinstall/cutlass-syclinstall/include
-    ${repo-cutlass-sycl_SOURCE_DIR}/include
-    ${repo-cutlass-sycl_SOURCE_DIR}/tools/util/include
+    ${PROJECT_SOURCE_DIR}/cutlass-syclinstall/include
+    #${repo-cutlass-sycl_SOURCE_DIR}/include
+    #${repo-cutlass-sycl_SOURCE_DIR}/tools/util/include
     ${repo-level-zero_SOURCE_DIR}/include
 )
 
@@ -90,6 +90,10 @@ set(SGL_KERNEL_CUDA_FLAGS
     "-DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1"
     "-DCUTLASS_DEBUG_TRACE_LEVEL=0"
     "-DCUTLASS_ENABLE_SYCL"
+    "-DSYCL_INTEL_TARGET"
+    "-DDPCPP_SYCL_TARGET=intel_gpu_pvc"
+    "-DCUTLASS_ARCH_MMA_SM90_SUPPORTED"
+    "-DCUTLASS_ARCH_MMA_MODIFIABLE_TMA_SM90_SUPPORTED"
     # Suppress warnings
     "-Wconversion"
     "-fno-strict-aliasing"

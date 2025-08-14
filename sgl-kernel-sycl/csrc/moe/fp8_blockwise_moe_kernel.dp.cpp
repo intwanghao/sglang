@@ -60,6 +60,7 @@ void launch_sm90_fp8_blockwise_scaled_group_mm(
   using ElementC = void;
   using ElementD = OutType;
   using ElementAccumulator = float;
+  using ElementComputeEpilogue = float;
   using LayoutA = cutlass::layout::RowMajor;
   using LayoutB = cutlass::layout::ColumnMajor;
   using LayoutC = LayoutD;
@@ -68,14 +69,31 @@ void launch_sm90_fp8_blockwise_scaled_group_mm(
   static constexpr int AlignmentB = 128 / cutlass::sizeof_bits<ElementB>::value;
   static constexpr int AlignmentC = 128 / cutlass::sizeof_bits<ElementD>::value;
 
-  using ArchTag = cutlass::arch::Sm90;
+  using ArchTag = cutlass::arch::IntelXe;
   using OperatorClass = cutlass::arch::OpClassTensorOp;
   static constexpr auto RoundStyle = cutlass::FloatRoundStyle::round_to_nearest;
-  using CustomEVTIdentity =  // acc
-      cutlass::epilogue::fusion::Sm90EVT<
-          cutlass::epilogue::fusion::
-              Sm90Compute<cutlass::epilogue::thread::Identity, ElementD, ElementAccumulator, RoundStyle>,
-          cutlass::epilogue::fusion::Sm90AccFetch>;
+  //using CustomEVTIdentity =
+  //    cutlass::epilogue::fusion::Sm90EVT<
+  //        cutlass::epilogue::fusion::
+  //            Sm90Compute<cutlass::epilogue::thread::Identity, ElementD, ElementAccumulator, RoundStyle>,
+  //        cutlass::epilogue::fusion::Sm90AccFetch>;
+  using EpilogueOp = cutlass::epilogue::fusion::LinCombEltAct<
+      cutlass::epilogue::thread::Identity,
+      //cutlass::epilogue::thread::ReLu,
+      ElementD,               // 写回类型
+      ElementComputeEpilogue, // 计算/转换类型（通常 = float）
+      ElementAccumulator,     // 累加器类型
+      ElementAccumulator,     // C 的类型（本例不使用，可与 Acc 相同）
+      cutlass::FloatRoundStyle::round_to_nearest // = RoundStyle
+  >;
+  // using ArchTag = cutlass::arch::Sm90;
+  // using OperatorClass = cutlass::arch::OpClassTensorOp;
+  // static constexpr auto RoundStyle = cutlass::FloatRoundStyle::round_to_nearest;
+  // using CustomEVTIdentity =  // acc
+  //     cutlass::epilogue::fusion::Sm90EVT<
+  //         cutlass::epilogue::fusion::
+  //             Sm90Compute<cutlass::epilogue::thread::Identity, ElementD, ElementAccumulator, RoundStyle>,
+  //         cutlass::epilogue::fusion::Sm90AccFetch>;
 
   using CollectiveEpilogue = typename cutlass::epilogue::collective::CollectiveBuilder<
       ArchTag,
@@ -86,13 +104,17 @@ void launch_sm90_fp8_blockwise_scaled_group_mm(
       ElementAccumulator,
       ElementAccumulator,
       ElementC,  // Use void to avoid load Matrix C
-      LayoutC*,
+      //float,
+      //LayoutC*,
+      LayoutC,
       AlignmentC,
       ElementD,
-      LayoutC*,
+      //LayoutC*,
+      LayoutC,
       AlignmentC,
-      typename ScheduleConfig::EpilogueSchedule,
-      CustomEVTIdentity>::CollectiveOp;
+      //typename ScheduleConfig::EpilogueSchedule
+      cutlass::epilogue::collective::EpilogueScheduleAuto,
+      EpilogueOp>::CollectiveOp;
 
   using CollectiveMainloop = typename cutlass::gemm::collective::CollectiveBuilder<
       ArchTag,
@@ -106,9 +128,12 @@ void launch_sm90_fp8_blockwise_scaled_group_mm(
       ElementAccumulator,
       typename ScheduleConfig::MmaTileShape,
       typename ScheduleConfig::ClusterShape,
-      cutlass::gemm::collective::StageCountAutoCarveout<static_cast<int>(
-          sizeof(typename CollectiveEpilogue::SharedStorage))>,
-      typename ScheduleConfig::KernelSchedule>::CollectiveOp;
+      //cutlass::gemm::collective::StageCountAutoCarveout<static_cast<int>(
+      //    sizeof(typename CollectiveEpilogue::SharedStorage))>,
+      cutlass::gemm::collective::StageCountAuto,
+      //typename ScheduleConfig::KernelSchedule
+      cutlass::gemm::collective::KernelScheduleAuto
+      >::CollectiveOp;
 
   using GemmKernel = cutlass::gemm::kernel::GemmUniversal<ProblemShape, CollectiveMainloop, CollectiveEpilogue, void>;
 
@@ -469,10 +494,11 @@ void sm90_fp8_blockwise_group_mm_dispatch_shape(
   struct MmaConfig0 {
     using ElementA = cutlass::float_e4m3_t;
     using MmaTileShape = Shape<_64, _128, _128>;
-    using ClusterShape = Shape<_2, _1, _1>;
+    //using ClusterShape = Shape<_2, _1, _1>;
+    using ClusterShape = Shape<_1, _1, _1>;
     using KernelSchedule = cutlass::gemm::KernelPtrArrayTmaWarpSpecializedPingpongFP8BlockScaledAccum;
     using EpilogueSchedule = cutlass::epilogue::PtrArrayTmaWarpSpecializedPingpong;
-    using ScaleConfig = cutlass::detail::Sm90BlockwiseScaleConfig<1, 128, 128>;
+    using ScaleConfig = cutlass::detail::IntelXeBlockwiseScaleConfig<1, 128, 128>;
 
     using LayoutSFA = decltype(ScaleConfig::deduce_layoutSFA());
     using LayoutSFB = decltype(ScaleConfig::deduce_layoutSFB());
@@ -481,10 +507,11 @@ void sm90_fp8_blockwise_group_mm_dispatch_shape(
   struct MmaConfig1 {
     using ElementA = cutlass::float_e4m3_t;
     using MmaTileShape = Shape<_128, _128, _128>;
-    using ClusterShape = Shape<_1, _2, _1>;
+    //using ClusterShape = Shape<_1, _2, _1>;
+    using ClusterShape = Shape<_1, _1, _1>;
     using KernelSchedule = cutlass::gemm::KernelPtrArrayTmaWarpSpecializedCooperativeFP8BlockScaledAccum;
     using EpilogueSchedule = cutlass::epilogue::PtrArrayTmaWarpSpecializedCooperative;
-    using ScaleConfig = cutlass::detail::Sm90BlockwiseScaleConfig<1, 128, 128>;
+    using ScaleConfig = cutlass::detail::IntelXeBlockwiseScaleConfig<1, 128, 128>;
 
     using LayoutSFA = decltype(ScaleConfig::deduce_layoutSFA());
     using LayoutSFB = decltype(ScaleConfig::deduce_layoutSFB());
@@ -495,7 +522,7 @@ void sm90_fp8_blockwise_group_mm_dispatch_shape(
   torch::Tensor problem_sizes_transpose = torch::empty(num_experts * 3, options_int);
 
   if (a.size(1) > 128) {
-    run_get_group_gemm_starts<MmaConfig0::LayoutSFA, MmaConfig0::LayoutSFB, MmaConfig0::ScaleConfig>(
+    run_get_group_gemm_starts<typename MmaConfig0::LayoutSFA, typename MmaConfig0::LayoutSFB, typename MmaConfig0::ScaleConfig>(
         expert_offsets,
         a_ptrs,
         b_ptrs,
@@ -527,7 +554,7 @@ void sm90_fp8_blockwise_group_mm_dispatch_shape(
         workspace);
   } else {
     // Small K
-    run_get_group_gemm_starts<MmaConfig1::LayoutSFA, MmaConfig1::LayoutSFB, MmaConfig1::ScaleConfig>(
+    run_get_group_gemm_starts<typename MmaConfig1::LayoutSFA,typename MmaConfig1::LayoutSFB,typename MmaConfig1::ScaleConfig>(
         expert_offsets,
         a_ptrs,
         b_ptrs,
@@ -650,7 +677,7 @@ void fp8_blockwise_scaled_grouped_mm(
 
   bool can_implement = false;
   auto sm_version = getSMVersion();
-
+  //std::cout << "ffff" << sm_version << std::endl;
 #if defined(CUTLASS_ARCH_MMA_SM100A_SUPPORTED) || defined(CUTLASS_ARCH_MMA_SM100_SUPPORTED)
 #if defined CUDA_VERSION && CUDA_VERSION >= 12080
   if (sm_version == 100) {
@@ -701,49 +728,50 @@ void fp8_blockwise_scaled_grouped_mm(
 #endif
 
 #if defined(CUTLASS_ARCH_MMA_SM90_SUPPORTED) && defined(CUTLASS_ARCH_MMA_MODIFIABLE_TMA_SM90_SUPPORTED)
-  if (sm_version == 90) {
-    if (output.scalar_type() == torch::kBFloat16) {
-      sm90_fp8_blockwise_group_mm_dispatch_shape<cutlass::bfloat16_t>(
-          output,
-          a_ptrs,
-          b_ptrs,
-          out_ptrs,
-          a_scales_ptrs,
-          b_scales_ptrs,
-          a,
-          b,
-          scales_a,
-          scales_b,
-          stride_a,
-          stride_b,
-          stride_c,
-          layout_sfa,
-          layout_sfb,
-          problem_sizes,
-          expert_offsets,
-          workspace);
-    } else {
-      sm90_fp8_blockwise_group_mm_dispatch_shape<cutlass::half_t>(
-          output,
-          a_ptrs,
-          b_ptrs,
-          out_ptrs,
-          a_scales_ptrs,
-          b_scales_ptrs,
-          a,
-          b,
-          scales_a,
-          scales_b,
-          stride_a,
-          stride_b,
-          stride_c,
-          layout_sfa,
-          layout_sfb,
-          problem_sizes,
-          expert_offsets,
-          workspace);
-    }
-    can_implement = true;
+  //if (sm_version == 90) {
+  if (sm_version == 180) {
+    //if (output.scalar_type() == torch::kBFloat16) {
+    //  sm90_fp8_blockwise_group_mm_dispatch_shape<cutlass::bfloat16_t>(
+    //      output,
+    //      a_ptrs,
+    //      b_ptrs,
+    //      out_ptrs,
+    //      a_scales_ptrs,
+    //      b_scales_ptrs,
+    //      a,
+    //      b,
+    //      scales_a,
+    //      scales_b,
+    //      stride_a,
+    //      stride_b,
+    //      stride_c,
+    //      layout_sfa,
+    //      layout_sfb,
+    //      problem_sizes,
+    //      expert_offsets,
+    //      workspace);
+    //} else {
+    //  sm90_fp8_blockwise_group_mm_dispatch_shape<cutlass::half_t>(
+    //      output,
+    //      a_ptrs,
+    //      b_ptrs,
+    //      out_ptrs,
+    //      a_scales_ptrs,
+    //      b_scales_ptrs,
+    //      a,
+    //      b,
+    //      scales_a,
+    //      scales_b,
+    //      stride_a,
+    //      stride_b,
+    //      stride_c,
+    //      layout_sfa,
+    //      layout_sfb,
+    //      problem_sizes,
+    //      expert_offsets,
+    //      workspace);
+    //}
+    //can_implement = true;
   }
 #endif
   TORCH_CHECK_NOT_IMPLEMENTED(

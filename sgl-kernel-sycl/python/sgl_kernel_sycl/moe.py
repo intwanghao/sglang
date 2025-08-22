@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 
 import torch
 
+from sgl_kernel_sycl import common_ops
 
 def moe_align_block_size(
     topk_ids,
@@ -14,7 +15,7 @@ def moe_align_block_size(
     cumsum_buffer,
     pad_sorted_token_ids=False,
 ):
-    torch.ops.sgl_kernel_sycl.moe_align_block_size.default(
+    common_ops.moe_align_block_size(
         topk_ids,
         num_experts,
         block_size,
@@ -25,6 +26,17 @@ def moe_align_block_size(
         cumsum_buffer,
         pad_sorted_token_ids,
     )
+    #torch.ops.sgl_kernel_sycl.moe_align_block_size.default(
+    #    topk_ids,
+    #    num_experts,
+    #    block_size,
+    #    sorted_token_ids,
+    #    experts_ids,
+    #    num_tokens_post_pad,
+    #    token_cnts_buffer,
+    #    cumsum_buffer,
+    #    pad_sorted_token_ids,
+    #)
 
 
 def topk_softmax(
@@ -33,10 +45,12 @@ def topk_softmax(
     gating_output: float,
     renormalize: bool = False,
 ) -> None:
-    torch.ops.sgl_kernel_sycl.topk_softmax.default(
+    common_ops.topk_softmax(
         topk_weights, topk_ids, gating_output, renormalize
     )
-
+    #torch.ops.sgl_kernel_sycl.topk_softmax.default(
+    #    topk_weights, topk_ids, gating_output, renormalize
+    #)
 
 def moe_fused_gate(
     input_tensor,
@@ -55,7 +69,7 @@ def moe_fused_gate(
     # for non-supported case, we suggest to use the biased_grouped_topk func in sglang.srt.layers.moe.topk
     # num_fused_shared_experts: if > 0, the last several experts will be replaced with shared experts
     # routed_scaling_factor: if > 0, the shared experts will be scaled by this factor
-    return torch.ops.sgl_kernel_sycl.moe_fused_gate.default(
+    return common_ops.moe_fused_gate(
         input_tensor,
         bias,
         num_expert_group,
@@ -64,6 +78,15 @@ def moe_fused_gate(
         num_fused_shared_experts,
         routed_scaling_factor,
     )
+    #return torch.ops.sgl_kernel_sycl.moe_fused_gate.default(
+    #    input_tensor,
+    #    bias,
+    #    num_expert_group,
+    #    topk_group,
+    #    topk,
+    #    num_fused_shared_experts,
+    #    routed_scaling_factor,
+    #)
 
 
 def ep_moe_pre_reorder(
@@ -77,17 +100,28 @@ def ep_moe_pre_reorder(
     topk,
     use_per_token_if_dynamic,
 ):
-    return torch.ops.sgl_kernel_sycl.ep_moe_pre_reorder.default(
-        input_tensor,
-        gateup_input,
-        src2dst,
-        topk_ids,
-        a1_scales,
-        start_expert_id,
-        end_expert_id,
-        topk,
-        use_per_token_if_dynamic,
+    return common_ops.ep_moe_pre_reorder(
+       input_tensor,
+       gateup_input,
+       src2dst,
+       topk_ids,
+       a1_scales,
+       start_expert_id,
+       end_expert_id,
+       topk,
+       use_per_token_if_dynamic,
     )
+    #return torch.ops.sgl_kernel_sycl.ep_moe_pre_reorder.default(
+    #    input_tensor,
+    #    gateup_input,
+    #    src2dst,
+    #    topk_ids,
+    #    a1_scales,
+    #    start_expert_id,
+    #    end_expert_id,
+    #    topk,
+    #    use_per_token_if_dynamic,
+    #)
 
 
 def ep_moe_silu_and_mul(
@@ -98,7 +132,7 @@ def ep_moe_silu_and_mul(
     start_expert_id,
     end_expert_id,
 ):
-    return torch.ops.sgl_kernel_sycl.ep_moe_silu_and_mul.default(
+    return common_ops.ep_moe_silu_and_mul(
         gateup_output,
         down_input,
         reorder_topk_ids,
@@ -106,6 +140,14 @@ def ep_moe_silu_and_mul(
         start_expert_id,
         end_expert_id,
     )
+    #return torch.ops.sgl_kernel_sycl.ep_moe_silu_and_mul.default(
+    #    gateup_output,
+    #    down_input,
+    #    reorder_topk_ids,
+    #    scales,
+    #    start_expert_id,
+    #    end_expert_id,
+    #)
 
 
 def ep_moe_post_reorder(
@@ -118,7 +160,7 @@ def ep_moe_post_reorder(
     end_expert_id,
     topk,
 ):
-    return torch.ops.sgl_kernel_sycl.ep_moe_post_reorder.default(
+    return common_ops.ep_moe_post_reorder(
         down_output,
         output,
         src2dst,
@@ -128,7 +170,16 @@ def ep_moe_post_reorder(
         end_expert_id,
         topk,
     )
-
+    #return torch.ops.sgl_kernel_sycl.ep_moe_post_reorder.default(
+    #    down_output,
+    #    output,
+    #    src2dst,
+    #    topk_ids,
+    #    topk_weights,
+    #    start_expert_id,
+    #    end_expert_id,
+    #    topk,
+    #)
 
 def fp8_blockwise_scaled_grouped_mm(
     output,

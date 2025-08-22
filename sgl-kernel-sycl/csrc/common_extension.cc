@@ -17,6 +17,19 @@ limitations under the License.
 #include <torch/library.h>
 
 #include "sgl_kernel_ops.h"
+
+PYBIND11_MODULE(common_ops, m) {
+  m.def("moe_align_block_size", &moe_align_block_size);
+  m.def("topk_softmax", &topk_softmax);
+  m.def("moe_fused_gate", &moe_fused_gate);
+  m.def("ep_moe_pre_reorder", &ep_moe_pre_reorder);
+  m.def("ep_moe_silu_and_mul", &ep_moe_silu_and_mul);
+  m.def("ep_moe_post_reorder", &ep_moe_post_reorder);
+  m.def("gptq_marlin_repack", &marlin_moe_wna16::gptq_marlin_repack);
+  m.def("awq_marlin_repack", &marlin_moe_wna16::awq_marlin_repack);
+  m.def("moe_wna16_marlin_gemm", &moe_wna16_marlin_gemm);
+}
+
 TORCH_LIBRARY_FRAGMENT(sgl_kernel_sycl, m) {
 
   /*
@@ -104,4 +117,4 @@ TORCH_LIBRARY_FRAGMENT(sgl_kernel_sycl, m) {
   m.impl("moe_wna16_marlin_gemm", torch::kXPU, &moe_wna16_marlin_gemm);
 }
 
-REGISTER_EXTENSION(common_ops)
+//REGISTER_EXTENSION(common_ops)

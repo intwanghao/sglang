@@ -25,6 +25,7 @@ find_package(Torch REQUIRED)
 enable_language(CXX)
 find_package(IntelSYCL REQUIRED)
 find_package(MKL REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
 
 message(STATUS "Detected COMPATIBILITY_VALUE=${COMPATIBILITY_VALUE}")
 if ("${COMPATIBILITY_VALUE}" VERSION_GREATER_EQUAL "13.0")
@@ -153,7 +154,8 @@ set(SOURCES
     "csrc/moe/marlin_moe_wna16/kernel_fp16_ku8b128.dp.cpp"
 )
 
-Python_add_library(common_ops MODULE USE_SABI ${SKBUILD_SABI_VERSION} WITH_SOABI ${SOURCES})
+#Python_add_library(common_ops MODULE USE_SABI ${SKBUILD_SABI_VERSION} WITH_SOABI ${SOURCES})
+Python_add_library(common_ops MODULE WITH_SOABI ${SOURCES})
 
 target_compile_options(common_ops PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${SGL_KERNEL_CUDA_FLAGS}>)
 #target_include_directories(common_ops PRIVATE
@@ -178,6 +180,7 @@ else()
     set(CMAKE_SYCL_FLAGS "${CMAKE_SYCL_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=1")
 endif()
 
-target_link_libraries(common_ops PRIVATE ${TORCH_LIBRARIES} c10  ${MKL_LIB})
+target_link_libraries(common_ops PRIVATE ${TORCH_LIBRARIES} c10  ${MKL_LIB} torch_python)
+target_link_directories(common_ops PRIVATE ${Torch_DIR}/../../../lib)
 
 install(TARGETS common_ops LIBRARY DESTINATION sgl_kernel_sycl)

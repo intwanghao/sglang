@@ -21,7 +21,8 @@ limitations under the License.
 #include <torch/all.h>
 #include <torch/library.h>
 #include <torch/torch.h>
-
+#include <torch/extension.h> 
+#include <pybind11/pybind11.h>
 #include <tuple>
 #include <vector>
 

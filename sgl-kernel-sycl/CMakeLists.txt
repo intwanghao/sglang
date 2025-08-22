@@ -51,13 +51,13 @@ include(FetchContent)
 #)
 #FetchContent_Populate(repo-cutlass-sycl)
 
-FetchContent_Declare(
-    repo-level-zero
-    GIT_REPOSITORY https://github.com/oneapi-src/level-zero.git
-    GIT_TAG        42310ca70c32588702653d86f1c624427c7710b4
-    GIT_SHALLOW    OFF
-)
-FetchContent_Populate(repo-level-zero)
+#FetchContent_Declare(
+#    repo-level-zero
+#    GIT_REPOSITORY https://github.com/oneapi-src/level-zero.git
+#    GIT_TAG        42310ca70c32588702653d86f1c624427c7710b4
+#    GIT_SHALLOW    OFF
+#)
+#FetchContent_Populate(repo-level-zero)
 
 # clean Torch Flag
 #clear_cuda_arches(CMAKE_FLAG)
@@ -65,14 +65,9 @@ FetchContent_Populate(repo-level-zero)
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/csrc
-    #/user/wanghao2/dles252install/compiler/2025.2/include
-    #/user/wanghao2/dles252install/compiler/2025.2/include/sycl
     ${PROJECT_SOURCE_DIR}/dpctinstall/dpct_header/include
     ${PROJECT_SOURCE_DIR}/build_sycl/_deps/repo-flashinfer-src/include
     ${PROJECT_SOURCE_DIR}/cutlass-syclinstall/include
-    #${repo-cutlass-sycl_SOURCE_DIR}/include
-    #${repo-cutlass-sycl_SOURCE_DIR}/tools/util/include
-    ${repo-level-zero_SOURCE_DIR}/include
 )
 
 include_directories(${SYCL_INCLUDE_DIR})

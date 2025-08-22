@@ -26,6 +26,12 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 ```
 Due to compatibility issue, need to replace libsycl in torch install directory with 2025.2 install directory.
 Reference command:
+If use 2025.0, please replace 1 file with 2025.2 version
+```bash
+cp ~/dles252install/compiler/2025.2/include/sycl/ext/intel/math/imf_half_trivial.hpp ~/dlesinstall/compiler/2025.0/include/sycl/ext/intel/math/imf_half_trivial.hpp
+```
+
+If use 2025.2, please replace 3 file in torch lib directory with 2025.2 version 
 ```bash
 cp /user/wanghao2/dles252install/compiler/2025.2/lib/libsycl.so /user/wanghao2/miniforge3/envs/syclsglang312/lib/python3.12/site-packages/torch/lib/../../../../
 cp /user/wanghao2/dles252install/compiler/2025.2/lib/libsycl.so.8 /user/wanghao2/miniforge3/envs/syclsglang312/lib/python3.12/site-packages/torch/lib/../../../../

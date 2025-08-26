@@ -2,6 +2,7 @@ import itertools
 
 import pytest
 import torch
+import triton
 from sgl_kernel_sycl import topk_softmax
 
 
@@ -136,4 +137,4 @@ def test_topk_softmax_renormalize(num_tokens, num_experts, topk):
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    pytest.main(["-s", "-v", __file__])

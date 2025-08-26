@@ -71,7 +71,7 @@ include_directories(
 )
 
 include_directories(${SYCL_INCLUDE_DIR})
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SGL_KERNEL_CUDA_FLAGS
     "-DNDEBUG"
     "-DOPERATOR_NAMESPACE=sgl-kernel"
@@ -147,6 +147,7 @@ set(SOURCES
     "csrc/moe/marlin_moe_wna16/kernel_fp16_ku4.dp.cpp"
     "csrc/moe/marlin_moe_wna16/kernel_fp16_ku4b8.dp.cpp"
     "csrc/moe/marlin_moe_wna16/kernel_fp16_ku8b128.dp.cpp"
+    "csrc/moe/sycl_test_usm.cpp"
 )
 
 #Python_add_library(common_ops MODULE USE_SABI ${SKBUILD_SABI_VERSION} WITH_SOABI ${SOURCES})
@@ -158,6 +159,12 @@ target_compile_options(common_ops PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${SGL_KERNEL
 #    ${repo-cutlass_SOURCE_DIR}/examples/common
 #    ${repo-flash-attention_SOURCE_DIR}/csrc/flash_attn/src
 #)
+target_compile_options(common_ops PRIVATE -fsycl)
+target_link_options(common_ops PRIVATE
+  -fsycl
+  #-Xsze-intel-xe-features=+set-abarrier-arrive-lmc
+  #-Xsmisched-prera-direction=topdown
+)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 execute_process(

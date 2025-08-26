@@ -62,7 +62,7 @@ void count_and_sort_expert_tokens_kernel_wrapper(
   unsigned int localMemSize = dpct::kernel_launcher::_local_mem_size;
   sycl::nd_range<3> nr = dpct::kernel_launcher::_nr;
 
-  auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
+  //auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
 
   queue.submit([&](sycl::handler& cgh) {
     auto last_event = dpct::get_default_queue().ext_oneapi_get_last_event();
@@ -73,7 +73,8 @@ void count_and_sort_expert_tokens_kernel_wrapper(
         cgh.depends_on(_e.value());
     }(last_event);
 
-    cgh.parallel_for(nr, exp_props, [=](sycl::nd_item<3> item_ct1) {
+    //cgh.parallel_for(nr, exp_props, [=](sycl::nd_item<3> item_ct1) {
+    cgh.parallel_for(nr,  [=](sycl::nd_item<3> item_ct1) {
       count_and_sort_expert_tokens_kernel<scalar_t>(topk_ids, sorted_token_ids, cumsum_buffer, numel);
     });
   });
@@ -264,7 +265,7 @@ void moe_align_block_size_kernel_wrapper(
   unsigned int localMemSize = dpct::kernel_launcher::_local_mem_size;
   sycl::nd_range<3> nr = dpct::kernel_launcher::_nr;
 
-  auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
+  //auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
 
   queue.submit([&](sycl::handler& cgh) {
     sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(sycl::range<1>(localMemSize), cgh);
@@ -277,7 +278,8 @@ void moe_align_block_size_kernel_wrapper(
         cgh.depends_on(_e.value());
     }(last_event);
 
-    cgh.parallel_for(nr, exp_props, [=](sycl::nd_item<3> item_ct1) {
+    //cgh.parallel_for(nr, exp_props, [=](sycl::nd_item<3> item_ct1) {
+    cgh.parallel_for(nr, [=](sycl::nd_item<3> item_ct1) {
       moe_align_block_size_kernel<scalar_t>(
           topk_ids,
           sorted_token_ids,
@@ -409,7 +411,7 @@ void moe_align_block_size_small_batch_expert_kernel_wrapper(
   unsigned int localMemSize = dpct::kernel_launcher::_local_mem_size;
   sycl::nd_range<3> nr = dpct::kernel_launcher::_nr;
 
-  auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
+  //auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
 
   queue.submit([&](sycl::handler& cgh) {
     sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(sycl::range<1>(localMemSize), cgh);
@@ -422,7 +424,8 @@ void moe_align_block_size_small_batch_expert_kernel_wrapper(
         cgh.depends_on(_e.value());
     }(last_event);
 
-    cgh.parallel_for(nr, exp_props, [=](sycl::nd_item<3> item_ct1) {
+    //cgh.parallel_for(nr, exp_props, [=](sycl::nd_item<3> item_ct1) {
+    cgh.parallel_for(nr, [=](sycl::nd_item<3> item_ct1) {
       moe_align_block_size_small_batch_expert_kernel<scalar_t>(
           topk_ids,
           sorted_token_ids,
@@ -468,7 +471,7 @@ void moe_align_block_size(
       const int32_t shared_mem_size = ((threads + 1) * num_experts + (num_experts + 1)) * sizeof(int32_t);
 
       auto small_batch_expert_kernel = moe_align_block_size_small_batch_expert_kernel_wrapper<scalar_t>;
-      dpct::kernel_launcher::launch(
+       dpct::kernel_launcher::launch(
           small_batch_expert_kernel,
           1,
           threads,
@@ -488,7 +491,7 @@ void moe_align_block_size(
       const size_t scan_size = next_pow2(num_experts);
       const size_t shared_mem_size = (num_experts + (num_experts + 1) + scan_size) * sizeof(int32_t);
 
-      dpct::kernel_launcher::launch(
+       dpct::kernel_launcher::launch(
           align_kernel,
           1,
           threads,
@@ -511,7 +514,7 @@ void moe_align_block_size(
       const int actual_blocks = std::min(num_blocks, max_blocks);
 
       auto sort_kernel = count_and_sort_expert_tokens_kernel_wrapper<scalar_t>;
-      dpct::kernel_launcher::launch(
+       dpct::kernel_launcher::launch(
           sort_kernel,
           actual_blocks,
           block_threads,

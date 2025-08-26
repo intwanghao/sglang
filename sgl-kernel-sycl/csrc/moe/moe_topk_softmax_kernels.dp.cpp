@@ -477,8 +477,8 @@ void topkGatingSoftmaxLauncherHelper(
   info::device::max_work_group_size. Adjust the work-group size if needed.
   */
   {
-    auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
-    dpct::has_capability_or_fail(c10::xpu::getCurrentXPUStream().queue().get_device(), {sycl::aspect::fp16});
+    //auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
+    //dpct::has_capability_or_fail(c10::xpu::getCurrentXPUStream().queue().get_device(), {sycl::aspect::fp16});
 
     stream->submit([&](sycl::handler& cgh) {
       auto last_event = dpct::get_default_queue().ext_oneapi_get_last_event();
@@ -491,7 +491,7 @@ void topkGatingSoftmaxLauncherHelper(
 
       cgh.parallel_for(
           sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * block_dim, block_dim),
-          exp_props,
+          //exp_props,
           [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(32)]] {
             topkGatingSoftmax<T, VPT, EXPERTS, WARPS_PER_TB, BYTES_PER_LDG>(
                 input, finished, output, num_rows, indices, k, start_expert, end_expert, renormalize);
@@ -649,7 +649,7 @@ void topk_softmax(
       torch::empty({workspace_size}, gating_output.options().dtype(at::ScalarType::Float));
 
   const at::ScalarType dtype = gating_output.scalar_type();
-  if (dtype == at::ScalarType::Float) {
+   if (dtype == at::ScalarType::Float) {
     topkGatingSoftmaxKernelLauncher<float>(
         gating_output.data_ptr<float>(),
         topk_weights.data_ptr<float>(),

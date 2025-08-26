@@ -28,6 +28,7 @@ PYBIND11_MODULE(common_ops, m) {
   m.def("gptq_marlin_repack", &marlin_moe_wna16::gptq_marlin_repack);
   m.def("awq_marlin_repack", &marlin_moe_wna16::awq_marlin_repack);
   m.def("moe_wna16_marlin_gemm", &moe_wna16_marlin_gemm);
+  m.def("vec_add_usm", &vec_add_usm);
 }
 
 TORCH_LIBRARY_FRAGMENT(sgl_kernel_sycl, m) {

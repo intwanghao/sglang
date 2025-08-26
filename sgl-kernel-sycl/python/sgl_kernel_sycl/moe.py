@@ -4,6 +4,9 @@ import torch
 
 from sgl_kernel_sycl import common_ops
 
+def vec_add_usm(a, b, c, n):
+    return common_ops.vec_add_usm(a, b, c, n)
+
 def moe_align_block_size(
     topk_ids,
     num_experts,

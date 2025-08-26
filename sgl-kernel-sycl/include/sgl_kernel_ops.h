@@ -23,6 +23,7 @@ limitations under the License.
 #include <torch/torch.h>
 #include <torch/extension.h> 
 #include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 #include <tuple>
 #include <vector>
 
@@ -44,7 +45,11 @@ limitations under the License.
 
 using fptr_t = int64_t;
 
-
+void
+vec_add_usm(torch::Tensor& a,
+            torch::Tensor& b,
+            torch::Tensor& c,
+            int n);
 /*
  * From csrc/moe
  */

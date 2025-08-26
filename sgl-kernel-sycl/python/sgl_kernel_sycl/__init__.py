@@ -74,6 +74,7 @@ from sgl_kernel_sycl.moe import (
     moe_fused_gate,
     prepare_moe_input,
     topk_softmax,
+    vec_add_usm
 )
 from sgl_kernel_sycl.sampling import (
     min_p_sampling_from_probs,

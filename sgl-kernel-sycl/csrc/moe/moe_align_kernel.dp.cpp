@@ -81,11 +81,6 @@ void count_and_sort_expert_tokens_kernel_wrapper(
 }
 
 template <typename scalar_t>
-/*
-DPCT1110:615: The total declared local variable size in device function moe_align_block_size_kernel exceeds 128 bytes
-and may cause high register pressure. Consult with your hardware vendor to find the total register size available and
-adjust the code, or use smaller sub-group size to avoid high register pressure.
-*/
 void moe_align_block_size_kernel(
     const scalar_t* __restrict__ topk_ids,
     int32_t* __restrict__ sorted_token_ids,
@@ -113,22 +108,14 @@ void moe_align_block_size_kernel(
     shared_counts[tid] = 0;
   }
 
-  /*
-  DPCT1113:778: Consider replacing sycl::nd_item::barrier(sycl::access::fence_space::local_space) with
-  sycl::nd_item::barrier() if function "moe_align_block_size_kernel" is called in a multidimensional kernel.
-  */
-  item_ct1.barrier(sycl::access::fence_space::local_space);
+  item_ct1.barrier();
 
   for (size_t i = tid; i < numel; i += stride) {
     int expert_id = topk_ids[i];
-    dpct::atomic_fetch_add<sycl::access::address_space::generic_space>(&shared_counts[expert_id], 1);
+    dpct::atomic_fetch_add<sycl::access::address_space::local_space>(&shared_counts[expert_id], 1);
   }
 
-  /*
-  DPCT1113:779: Consider replacing sycl::nd_item::barrier(sycl::access::fence_space::local_space) with
-  sycl::nd_item::barrier() if function "moe_align_block_size_kernel" is called in a multidimensional kernel.
-  */
-  item_ct1.barrier(sycl::access::fence_space::local_space);
+  item_ct1.barrier();
 
   int32_t padded_count = 0;
   if (tid < num_experts) {
@@ -141,31 +128,23 @@ void moe_align_block_size_kernel(
     scan_buf[tid] = 0;
   }
 
-  /*
-  DPCT1113:780: Consider replacing sycl::nd_item::barrier(sycl::access::fence_space::local_space) with
-  sycl::nd_item::barrier() if function "moe_align_block_size_kernel" is called in a multidimensional kernel.
-  */
-  item_ct1.barrier(sycl::access::fence_space::local_space);
+  item_ct1.barrier();
 
   // Blelloch scan
   int offset = 1;
 #pragma unroll
   for (int d = scan_size >> 1; d > 0; d >>= 1) {
+    
+    int ai = offset * (2 * tid + 1) - 1;
+    int bi = offset * (2 * tid + 2) - 1;
+    int temp1 = ai < scan_size ? scan_buf[ai] : 0;;
+    int temp2 = bi < scan_size ? scan_buf[bi] : 0;
+    item_ct1.barrier();
     if (tid < d) {
-      int ai = offset * (2 * tid + 1) - 1;
-      int bi = offset * (2 * tid + 2) - 1;
-      scan_buf[bi] += scan_buf[ai];
+      scan_buf[bi] = temp1 + temp2;
     }
     offset <<= 1;
-    /*
-    DPCT1118:616: SYCL group functions and algorithms must be encountered in converged control flow. You may need to
-    adjust the code.
-    */
-    /*
-    DPCT1113:783: Consider replacing sycl::nd_item::barrier(sycl::access::fence_space::local_space) with
-    sycl::nd_item::barrier() if function "moe_align_block_size_kernel" is called in a multidimensional kernel.
-    */
-    item_ct1.barrier(sycl::access::fence_space::local_space);
+    item_ct1.barrier();
   }
 
   // down-sweep
@@ -173,33 +152,26 @@ void moe_align_block_size_kernel(
     prefix[num_experts] = scan_buf[scan_size - 1];
     scan_buf[scan_size - 1] = 0;
   }
-  /*
-  DPCT1113:781: Consider replacing sycl::nd_item::barrier(sycl::access::fence_space::local_space) with
-  sycl::nd_item::barrier() if function "moe_align_block_size_kernel" is called in a multidimensional kernel.
-  */
-  item_ct1.barrier(sycl::access::fence_space::local_space);
+  item_ct1.barrier();
 
 #pragma unroll
   for (int d = 1; d < scan_size; d <<= 1) {
     offset >>= 1;
+
+    int ai = offset * (2 * tid + 1) - 1;
+    int bi = offset * (2 * tid + 2) - 1;
+
+    int temp = ai < scan_size ? scan_buf[ai] : 0;
+    int temp2 = bi < scan_size ? scan_buf[bi] : 0;
+
+    item_ct1.barrier();
     if (tid < d) {
-      int ai = offset * (2 * tid + 1) - 1;
-      int bi = offset * (2 * tid + 2) - 1;
       if (bi < scan_size) {
-        int temp = scan_buf[ai];
-        scan_buf[ai] = scan_buf[bi];
+        scan_buf[ai] = temp2;
         scan_buf[bi] += temp;
       }
     }
-    /*
-    DPCT1118:617: SYCL group functions and algorithms must be encountered in converged control flow. You may need to
-    adjust the code.
-    */
-    /*
-    DPCT1113:784: Consider replacing sycl::nd_item::barrier(sycl::access::fence_space::local_space) with
-    sycl::nd_item::barrier() if function "moe_align_block_size_kernel" is called in a multidimensional kernel.
-    */
-    item_ct1.barrier(sycl::access::fence_space::local_space);
+    item_ct1.barrier();
   }
 
   if (tid < num_experts) {
@@ -211,11 +183,7 @@ void moe_align_block_size_kernel(
     *total_tokens_post_pad = s_total_tokens_post_pad;
   }
 
-  /*
-  DPCT1113:782: Consider replacing sycl::nd_item::barrier(sycl::access::fence_space::local_space) with
-  sycl::nd_item::barrier() if function "moe_align_block_size_kernel" is called in a multidimensional kernel.
-  */
-  item_ct1.barrier(sycl::access::fence_space::local_space);
+  item_ct1.barrier();
 
   if (tid <= num_experts) {
     cumsum[tid] = prefix[tid];
@@ -236,7 +204,7 @@ void moe_align_block_size_kernel(
     }
     expert_ids[i] = left - 1;
   }
-
+  
   if (pad_sorted_token_ids) {
     Vec fill_vec;
     fill_vec.x() = fill_vec.y() = fill_vec.z() = fill_vec.w() = numel;
@@ -508,7 +476,7 @@ void moe_align_block_size(
           pad_sorted_token_ids,
           scan_size);
 
-      const int block_threads = std::min(256, (int)threads);
+      const int block_threads = std::min(256 , (int)threads);
       const int num_blocks = (topk_ids.numel() + block_threads - 1) / block_threads;
       const int max_blocks = 65535;
       const int actual_blocks = std::min(num_blocks, max_blocks);
@@ -526,4 +494,5 @@ void moe_align_block_size(
           topk_ids.numel());
     }
   });
+  stream->wait();
 }

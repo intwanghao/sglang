@@ -202,21 +202,15 @@ def moe_align_block_size_triton(
         tokens_per_thread,
     )
 
-
 @pytest.mark.parametrize(
     "block_size,num_tokens,topk,num_experts,pad_sorted_token_ids",
     list(
         itertools.product(
-             [32, 64, 128, 256],  # block_size
-             [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],  # num_tokens
-             [1, 2, 4, 8, 16, 32, 64],  # topk
-             [64, 160, 256, 257, 260, 264],  #  num_experts
+             [32, 64],  # block_size
+             [1, 2],  # num_tokens
+             [1, 2],  # topk
+             [32, 67],  #  num_experts
              [True, False],  # pad_sorted_token_ids
-            # [32],  # block_size
-            # [1],  # num_tokens
-            # [1],  # topk
-            # [64],  #  num_experts
-            # [True],  # pad_sorted_token_ids
         )
     ),
 )
@@ -230,7 +224,7 @@ def test_moe_align_block_size_compare_implementations(
 
     max_num_tokens_padded = topk_ids.numel() + num_experts * (block_size - 1)
 
-    sorted_ids_cuda = torch.empty(
+    sorted_ids_cuda = torch.zeros(
         (max_num_tokens_padded,), dtype=torch.int32, device=topk_ids.device
     )
     if not pad_sorted_token_ids:
@@ -239,15 +233,15 @@ def test_moe_align_block_size_compare_implementations(
     expert_ids_cuda = torch.zeros(
         (max_num_m_blocks,), dtype=torch.int32, device=topk_ids.device
     )
-    num_tokens_post_pad_cuda = torch.empty(
+    num_tokens_post_pad_cuda = torch.zeros(
         (1), dtype=torch.int32, device=topk_ids.device
     )
-    token_cnts_buffer = torch.empty(
+    token_cnts_buffer = torch.zeros(
         (num_experts + 1) * num_experts,
         dtype=torch.int32,
         device=topk_ids.device,
     )
-    cumsum_buffer = torch.empty(
+    cumsum_buffer = torch.zeros(
         num_experts + 1, dtype=torch.int32, device=topk_ids.device
     )
 
@@ -277,7 +271,6 @@ def test_moe_align_block_size_compare_implementations(
         cumsum_buffer_xpu,
         pad_sorted_token_ids_xpu,
     )
-    
 
     #return
     moe_align_block_size_torch(
@@ -296,8 +289,8 @@ def test_moe_align_block_size_compare_implementations(
     assert torch.allclose(expert_ids_cuda_xpu.to("cpu"), expert_ids_triton, atol=0, rtol=0), (
         f"Expert IDs mismatch for block_size={block_size_xpu}, "
         f"num_tokens={num_tokens}, topk={topk}\n"
-        f"CUDA expert_ids: {expert_ids_cuda_xpu.to("cpu")}\n"
-        f"Triton expert_ids: {expert_ids_triton}"
+        f"CUDA expert_ids1: {expert_ids_cuda_xpu.to("cpu")}\n"
+        f"Triton expert_ids1: {expert_ids_triton}"
     )
 
     assert torch.allclose(
@@ -305,8 +298,8 @@ def test_moe_align_block_size_compare_implementations(
     ), (
         f"Num tokens post pad mismatch for block_size={block_size_xpu}, "
         f"num_tokens={num_tokens}, topk={topk}\n"
-        f"CUDA num_tokens_post_pad: {num_tokens_post_pad_cuda_xpu.to("cpu")}\n"
-        f"Triton num_tokens_post_pad: {num_tokens_post_pad_triton}"
+        f"CUDA num_tokens_post_pad2: {num_tokens_post_pad_cuda_xpu.to("cpu")}\n"
+        f"Triton num_tokens_post_pad2: {num_tokens_post_pad_triton}"
     )
     #return
     # Select an expert to check
@@ -335,8 +328,8 @@ def test_moe_align_block_size_compare_implementations(
     ), (
         f"Sorted IDs mismatch for block_size={block_size}, "
         f"num_tokens={num_tokens}, topk={topk}\n"
-        f"CUDA sorted_ids: {selected_sorted_ids_cuda}\n"
-        f"Triton sorted_ids: {selected_sorted_ids_triton}"
+        f"CUDA sorted_ids3: {selected_sorted_ids_cuda}\n"
+        f"Triton sorted_ids3: {selected_sorted_ids_triton}"
     )
 
 

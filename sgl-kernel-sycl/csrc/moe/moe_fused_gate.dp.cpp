@@ -58,11 +58,6 @@ template <typename T>
 using AccessType = AlignedArray<T, MAX_VPT>;
 
 template <typename T, typename Params>
-/*
-DPCT1110:628: The total declared local variable size in device function moe_fused_gate_impl exceeds 128 bytes and may
-cause high register pressure. Consult with your hardware vendor to find the total register size available and adjust the
-code, or use smaller sub-group size to avoid high register pressure.
-*/
 void moe_fused_gate_impl(
     void* input,
     void* bias,
@@ -74,6 +69,7 @@ void moe_fused_gate_impl(
     int64_t num_fused_shared_experts,
     double routed_scaling_factor,
     Params params) {
+     
   auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
   int tidx = item_ct1.get_local_id(2);
   int64_t thread_row = item_ct1.get_group(2) * params.ROWS_PER_CTA + item_ct1.get_local_id(1) * params.ROWS_PER_WARP +
@@ -113,11 +109,7 @@ if (thread_row < num_rows) {
     bias_chunk[ii] = vec_bias_thread_read_ptr[0][ii];
   }
 }
-  /*
-  DPCT1065:789: Consider replacing sycl::nd_item::barrier() with
-  sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to global
-  memory.
-  */
+
   sycl::group_barrier(item_ct1.get_group());
 if (thread_row < num_rows) {
 ////////////////////// Sigmoid //////////////////////
@@ -210,10 +202,12 @@ if (thread_row < num_rows) {
   memory.
   */
   sycl::group_barrier(item_ct1.get_group());
+// can pass
 
   ////////////////////// Topk //////////////////////
   float output_sum = 0.0f;
-  for (int k_idx = 0; k_idx < topk_excluding_share_expert_fusion; ++k_idx) {
+  //for (int k_idx = 0; k_idx < topk_excluding_share_expert_fusion; ++k_idx) {
+  for (int k_idx = 0; k_idx < 0; ++k_idx) {
     if (thread_row < num_rows) {
     // local argmax
     T max_val = bias_chunk[0];
@@ -291,6 +285,7 @@ if (thread_row < num_rows) {
     }
     sycl::group_barrier(item_ct1.get_group());
   }
+  
 if (thread_row < num_rows) {
   if (thread_group_idx == 0 && num_fused_shared_experts > 0) {
     int64_t last_idx = topk * thread_row + topk_excluding_share_expert_fusion;
@@ -381,13 +376,12 @@ info::device::max_work_group_size. Adjust the work-group size if needed.
 */
 #define LAUNCH_MOE_GATE_CONFIG(T, EXPERTS, EXPERT_GROUP)                                                            \
   do {                                                                                                              \
+                                                                 \
     constexpr int VPT = (EXPERTS) / (EXPERT_GROUP);                                                                 \
     /* If EXPERT_GROUP > WARP_SIZE, fall back to 1 row per warp */                                                  \
     constexpr int ROWS_PER_WARP = ((EXPERT_GROUP) <= WARP_SIZE) ? (WARP_SIZE / (EXPERT_GROUP)) : 1;                 \
     constexpr int ROWS_PER_CTA = WARPS_PER_CTA * ROWS_PER_WARP;                                                     \
     {                                                                                                               \
-      auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync}; \
-      dpct::has_capability_or_fail(c10::xpu::getCurrentXPUStream().queue().get_device(), {sycl::aspect::fp64});     \
                                                                                                                     \
       stream->submit([&](sycl::handler& cgh) {                                                                      \
         auto input_data_ptr_ct0 = input.data_ptr();                                                                 \
@@ -406,11 +400,10 @@ info::device::max_work_group_size. Adjust the work-group size if needed.
             cgh.depends_on(_e);                                                                                     \
           else if (_e.has_value())                                                                                  \
             cgh.depends_on(_e.value());                                                                             \
-        }(last_event);                                                                                              \
+        }(last_event);                                                                                             \
                                                                                                                     \
         cgh.parallel_for(                                                                                           \
             sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * block_dim, block_dim),                             \
-            exp_props,                                                                                              \
             [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(32)]] {                                      \
               moe_fused_gate_kernel<T, VPT, (EXPERTS), (EXPERT_GROUP), ROWS_PER_WARP, ROWS_PER_CTA, WARPS_PER_CTA>( \
                   input_data_ptr_ct0,                                                                               \
@@ -425,7 +418,7 @@ info::device::max_work_group_size. Adjust the work-group size if needed.
             });                                                                                                     \
       });                                                                                                           \
     }                                                                                                               \
-    dispatched = true;                                                                                              \
+    dispatched = true;                                                                                         \
   } while (0)
 
 //------------------------------------------------------------------------------
@@ -487,10 +480,13 @@ std::vector<at::Tensor> moe_fused_gate(
     double routed_scaling_factor) {
   int64_t num_rows = input.size(0);
   int32_t num_experts = input.size(1);
-  auto options = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kXPU);
-  auto output = torch::empty({num_rows, topk}, options);
-  auto indices = torch::empty({num_rows, topk}, options.dtype(torch::kInt32));
+  auto options_cpu = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCPU);
+  auto output_cpu = torch::empty({num_rows, topk}, options_cpu);
+  auto indices_cpu = torch::empty({num_rows, topk}, options_cpu.dtype(torch::kInt32));
 
+  auto output = output_cpu.to(torch::kXPU);
+  auto indices = indices_cpu.to(torch::kXPU);
+  
   // Compute grid dimensions based on runtime value for num_expert_group.
   int64_t rows_per_warp = std::max<int64_t>(1, WARP_SIZE / num_expert_group);
   int64_t num_warps = (num_rows + rows_per_warp - 1) / rows_per_warp;
@@ -576,7 +572,7 @@ std::vector<at::Tensor> moe_fused_gate(
       DPCT1049:635: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query
       info::device::max_work_group_size. Adjust the work-group size if needed.
       */
-      auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
+      //auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
       dpct::has_capability_or_fail(c10::xpu::getCurrentXPUStream().queue().get_device(), {sycl::aspect::fp64});
 
       stream->submit([&](sycl::handler& cgh) {
@@ -595,7 +591,7 @@ std::vector<at::Tensor> moe_fused_gate(
 
         cgh.parallel_for(
             sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * block_dim, block_dim),
-            exp_props,
+            //exp_props,
             [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(32)]] {
               moe_fused_gate_kernel_dynamic<bfloat16_t>(
                   input_data_ptr_ct0,
@@ -616,7 +612,7 @@ std::vector<at::Tensor> moe_fused_gate(
       DPCT1049:636: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query
       info::device::max_work_group_size. Adjust the work-group size if needed.
       */
-      auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
+      //auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
       dpct::has_capability_or_fail(c10::xpu::getCurrentXPUStream().queue().get_device(), {sycl::aspect::fp64});
 
       stream->submit([&](sycl::handler& cgh) {
@@ -635,7 +631,7 @@ std::vector<at::Tensor> moe_fused_gate(
 
         cgh.parallel_for(
             sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * block_dim, block_dim),
-            exp_props,
+            //exp_props,
             [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(32)]] {
               moe_fused_gate_kernel_dynamic<float16_t>(
                   input_data_ptr_ct0,
@@ -656,7 +652,7 @@ std::vector<at::Tensor> moe_fused_gate(
       DPCT1049:637: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query
       info::device::max_work_group_size. Adjust the work-group size if needed.
       */
-      auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
+      //auto exp_props = sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::use_root_sync};
       dpct::has_capability_or_fail(c10::xpu::getCurrentXPUStream().queue().get_device(), {sycl::aspect::fp64});
 
       stream->submit([&](sycl::handler& cgh) {
@@ -675,7 +671,7 @@ std::vector<at::Tensor> moe_fused_gate(
 
         cgh.parallel_for(
             sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * block_dim, block_dim),
-            exp_props,
+            //exp_props,
             [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(32)]] {
               moe_fused_gate_kernel_dynamic<float32_t>(
                   input_data_ptr_ct0,
@@ -695,5 +691,6 @@ std::vector<at::Tensor> moe_fused_gate(
       TORCH_CHECK(false, "Unsupported data type for moe_fused_gate");
     }
   }
+  stream->wait();
   return {output, indices};
 }

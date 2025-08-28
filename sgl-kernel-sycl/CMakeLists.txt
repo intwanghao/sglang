@@ -23,7 +23,7 @@ find_package(Torch REQUIRED)
 
 # SYCL
 enable_language(CXX)
-find_package(IntelSYCL REQUIRED)
+#find_package(IntelSYCL REQUIRED)
 find_package(MKL REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
 

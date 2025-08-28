@@ -166,31 +166,37 @@ def test_correctness(
 ):
     rope_ref = RotaryEmbedding(
         head_size, rotary_dim, max_position_embeddings, base, is_neox_style, dtype
-    ).to(device)
+    ).to("cpu")
     rope_flashinfer = FlashInferRotaryEmbedding(
         head_size, rotary_dim, max_position_embeddings, base, is_neox_style, dtype
     ).to(device)
 
-    pos_ids = torch.arange(seq_len, device=device).repeat(batch_size)
+    pos_ids = torch.arange(seq_len, device="cpu").repeat(batch_size)
     query = torch.randn(
-        batch_size * seq_len, num_q_heads * head_size, dtype=dtype, device=device
+        batch_size * seq_len, num_q_heads * head_size, dtype=dtype, device="cpu"
     )
     key = torch.randn(
-        batch_size * seq_len, num_kv_heads * head_size, dtype=dtype, device=device
+        batch_size * seq_len, num_kv_heads * head_size, dtype=dtype, device="cpu"
     )
+
+    pos_ids_xpu = pos_ids.to("xpu")
+    query_xpu = query.to("xpu")
+    key_xpu = key.to("xpu")
 
     query_ref, key_ref = query.clone(), key.clone()
     query_flashinfer, key_flashinfer = query.clone(), key.clone()
+    query_flashinfer_xpu = query_flashinfer.to("xpu")
+    key_flashinfer_xpu = key_flashinfer.to("xpu")
 
     query_ref_out, key_ref_out = rope_ref.forward_native(pos_ids, query_ref, key_ref)
-    query_flashinfer_out, key_flashinfer_out = rope_flashinfer.forward_cuda(
-        pos_ids, query_flashinfer, key_flashinfer
+    query_flashinfer_out_xpu, key_flashinfer_out_xpu = rope_flashinfer.forward_cuda(
+        pos_ids_xpu, query_flashinfer_xpu, key_flashinfer_xpu
     )
 
     torch.testing.assert_close(
-        query_ref_out, query_flashinfer_out, atol=1e-2, rtol=1e-2
+        query_ref_out, query_flashinfer_out_xpu.to("cpu"), atol=1e-2, rtol=1e-2
     )
-    torch.testing.assert_close(key_ref_out, key_flashinfer_out, atol=1e-2, rtol=1e-2)
+    torch.testing.assert_close(key_ref_out, key_flashinfer_out_xpu.to("cpu"), atol=1e-2, rtol=1e-2)
 
 
 if __name__ == "__main__":

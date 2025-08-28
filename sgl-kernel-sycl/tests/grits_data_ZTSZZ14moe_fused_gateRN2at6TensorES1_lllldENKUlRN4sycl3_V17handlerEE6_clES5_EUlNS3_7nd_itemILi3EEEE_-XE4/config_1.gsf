@@ -1,0 +1,65 @@
+#====================================================
+# INCLUDES
+#====================================================
+require "Gfx"
+require "yaml"
+include Gfx
+Device.register.memory_interface.render_control_unit_mode(
+  :computeEngineEnable => true, :cpu => true)
+ComputeContext.scheduler "run list"
+Device.compute_engine_enable
+ctx0 = ComputeContext.new
+ctx0.logical_streamer_index = 0
+Grits.disable_warning("AllFencesUsed")
+Grits.disable_error("DegradeToLinearOnFenceExhaustion")
+Grits.disable_warning("ExplicitMemoryRegionAddress")
+Grits.disable_warning("ExplicitMemoryRegionPPGTTAddress")
+
+ctx0.logical.state_base_address_enable = false 
+#============1D stateless surface===============
+buffer_6_ctx0 = MemoryBuffer.new(
+  :alignment => 0x1000,
+  :size => 0x300000,
+  :tiling => false,
+  :initialGTT => ctx0
+)
+buffer_6_ctx0.initialize_from_file(
+  :fileName => "ctx0_bufin_6.dat", 
+  :format => "RAW" 
+)
+buffer_6_ctx0.set_usage 'buffer_6_ctx0'
+buffer_6_ctx0.commit(ctx0)
+
+# Implicit Argument Buffer
+arg_buffer = MemoryBuffer.new(:size=>0xb0, :alignment=>0x1000)
+arg_buffer.initialize_from_file(
+      :fileName => "implicit_arg.dat",
+      :format => "RAW"
+    )
+arg_buffer.commit(ctx0)
+implicit_arg_buffer_addr = arg_buffer.address(:gttHandle => ctx0.ring.per_process_gtt.handle)
+
+# Local ID Table Buffer
+local_id_table_buffer = MemoryBuffer.new(:size=>0x9000, :alignment=>0x1000)
+local_id_table_buffer.initialize_from_file(
+      :fileName => "local_id_table.dat",
+      :format => "RAW"
+    )
+local_id_table_buffer.commit(ctx0)
+local_id_table_buffer_addr = local_id_table_buffer.address(:gttHandle => ctx0.ring.per_process_gtt.handle)
+local_id_table_offset = 0x48
+arg_buffer.write(:offset => local_id_table_offset,
+  :data=>local_id_table_buffer_addr, :dataSize=>8)
+
+
+indirect_arg_offset = 0xa0
+arg_0 = buffer_6_ctx0.address(:gttHandle => ctx0.ring.per_process_gtt.handle,:offset =>0) # 0x10
+arg_1 = buffer_6_ctx0.address(:gttHandle => ctx0.ring.per_process_gtt.handle,:offset =>0x200) # 0x18
+arg_2 = buffer_6_ctx0.address(:gttHandle => ctx0.ring.per_process_gtt.handle,:offset =>0x400) # 0x20
+arg_3 = buffer_6_ctx0.address(:gttHandle => ctx0.ring.per_process_gtt.handle,:offset =>0x600) # 0x28
+arg_4_0 = 0x1 # 0x30
+arg_4_1 = 0 # 0x30
+arg_5_0 = 0x2 # 0x38
+arg_5_1 = 0 # 0x38
+ # arg_6_0 = 0x4 # 0x40
+ # arg_6_1 = 0 # 0x40

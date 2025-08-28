@@ -2,7 +2,7 @@ from typing import Optional
 
 import torch
 from sgl_kernel_sycl.utils import get_cuda_stream, is_hopper_arch
-
+from sgl_kernel_sycl import common_ops
 
 # These implementations extensively draw from and build upon the FlashInfer project https://github.com/flashinfer-ai/flashinfer
 # Kudos to @yzh119
@@ -176,10 +176,12 @@ def silu_and_mul(input: torch.Tensor, out: torch.Tensor = None) -> torch.Tensor:
     else:
         out = torch.empty(
             input.shape[:-1] + (input.shape[-1] // 2,),
-            device=input.device,
+            device="cpu",
             dtype=input.dtype,
         )
-    torch.ops.sgl_kernel_sycl.silu_and_mul.default(out, input, get_cuda_stream())
+        out = out.to("xpu")
+    #torch.ops.sgl_kernel_sycl.silu_and_mul.default(out, input, get_cuda_stream())
+    common_ops.silu_and_mul(out, input, get_cuda_stream())
     return out
 
 
@@ -252,8 +254,17 @@ def apply_rope_with_cos_sin_cache_inplace(
     """
     if cos_sin_cache.dtype != torch.float32:
         raise ValueError("cos_sin_cache should be float32")
-
-    torch.ops.sgl_kernel_sycl.apply_rope_pos_ids_cos_sin_cache.default(
+    #torch.ops.sgl_kernel_sycl.apply_rope_pos_ids_cos_sin_cache.default(
+    #    query.view(query.shape[0], -1, head_size),
+    #    key.view(key.shape[0], -1, head_size),
+    #    query.view(query.shape[0], -1, head_size),
+    #    key.view(key.shape[0], -1, head_size),
+    #    cos_sin_cache,
+    #    positions.long(),
+    #    (not is_neox),
+    #    get_cuda_stream(),
+    #)
+    common_ops.apply_rope_pos_ids_cos_sin_cache(
         query.view(query.shape[0], -1, head_size),
         key.view(key.shape[0], -1, head_size),
         query.view(query.shape[0], -1, head_size),

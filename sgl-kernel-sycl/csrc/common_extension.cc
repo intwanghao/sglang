@@ -29,6 +29,8 @@ PYBIND11_MODULE(common_ops, m) {
   m.def("awq_marlin_repack", &marlin_moe_wna16::awq_marlin_repack);
   m.def("moe_wna16_marlin_gemm", &moe_wna16_marlin_gemm);
   m.def("vec_add_usm", &vec_add_usm);
+  m.def("silu_and_mul", &silu_and_mul);
+  m.def("apply_rope_pos_ids_cos_sin_cache", &apply_rope_pos_ids_cos_sin_cache);
 }
 
 TORCH_LIBRARY_FRAGMENT(sgl_kernel_sycl, m) {

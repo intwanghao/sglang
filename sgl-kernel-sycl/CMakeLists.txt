@@ -67,6 +67,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/csrc
     ${PROJECT_SOURCE_DIR}/dpctinstall/dpct_header/include
     ${PROJECT_SOURCE_DIR}/build_sycl/_deps/repo-flashinfer-src/include
+    ${PROJECT_SOURCE_DIR}/build_sycl/_deps/repo-flashinfer-src/csrc
     ${PROJECT_SOURCE_DIR}/cutlass-syclinstall/include
 )
 
@@ -126,6 +127,8 @@ if (SGL_KERNEL_ENABLE_FP8)
 endif()
 
 set(SOURCES
+    "csrc/elementwise/activation.dp.cpp"
+    "csrc/elementwise/rope.dp.cpp"
     "csrc/moe/moe_align_kernel.dp.cpp"
     "csrc/moe/moe_fused_gate.dp.cpp"
     "csrc/moe/moe_topk_softmax_kernels.dp.cpp"

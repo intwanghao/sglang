@@ -20,7 +20,8 @@ import torch
 
 
 def get_cuda_stream() -> int:
-    return torch.cuda.current_stream().cuda_stream
+    #return torch.xpu.current_stream().stream_id
+    return 0
 
 
 _cache_buf: Dict[Tuple[str, torch.device], torch.Tensor] = {}

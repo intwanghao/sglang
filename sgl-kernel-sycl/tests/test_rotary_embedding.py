@@ -143,12 +143,12 @@ class FlashInferRotaryEmbedding(RotaryEmbedding):
 @pytest.mark.parametrize(
     "head_size, rotary_dim, max_position_embeddings, base, is_neox_style, dtype, device, batch_size, seq_len, num_q_heads, num_kv_heads",
     [
-        (64, 64, 32, 8000, True, torch.bfloat16, "cuda", 32, 32, 1, 1),
-        (256, 128, 4096, 10000, True, torch.bfloat16, "cuda", 2, 512, 4, 2),
-        (512, 128, 311, 10000, True, torch.bfloat16, "cuda", 3, 39, 4, 2),
-        (128, 128, 2048, 10000, False, torch.bfloat16, "cuda", 2, 512, 32, 8),
-        (128, 128, 2048, 10000, False, torch.bfloat16, "cuda", 2, 512, 16, 4),
-        (512, 128, 311, 10000, False, torch.bfloat16, "cuda", 3, 39, 4, 2),
+        (64, 64, 32, 8000, True, torch.bfloat16, "xpu", 32, 32, 1, 1),
+        (256, 128, 4096, 10000, True, torch.bfloat16, "xpu", 2, 512, 4, 2),
+        (512, 128, 311, 10000, True, torch.bfloat16, "xpu", 3, 39, 4, 2),
+        (128, 128, 2048, 10000, False, torch.bfloat16, "xpu", 2, 512, 32, 8),
+        (128, 128, 2048, 10000, False, torch.bfloat16, "xpu", 2, 512, 16, 4),
+        (512, 128, 311, 10000, False, torch.bfloat16, "xpu", 3, 39, 4, 2),
     ],
 )
 def test_correctness(

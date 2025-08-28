@@ -50,6 +50,21 @@ vec_add_usm(torch::Tensor& a,
             torch::Tensor& b,
             torch::Tensor& c,
             int n);
+
+
+/*
+ * From csrc/elementwise
+ */
+void silu_and_mul(at::Tensor& out, at::Tensor& input, int64_t cuda_stream);
+void apply_rope_pos_ids_cos_sin_cache(
+    at::Tensor q,
+    at::Tensor k,
+    at::Tensor q_rope,
+    at::Tensor k_rope,
+    at::Tensor cos_sin_cache,
+    at::Tensor pos_ids,
+    bool interleave,
+    int64_t cuda_stream);
 /*
  * From csrc/moe
  */

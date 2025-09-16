@@ -2,7 +2,7 @@
 from typing import Optional
 
 import torch
-from sgl_kernel import gelu_and_mul, silu_and_mul
+from sgl_kernel_sycl import gelu_and_mul, silu_and_mul
 from triton_kernels.matmul_ogs import matmul_ogs
 from triton_kernels.routing import GatherIndx, RoutingData, ScatterIndx, routing
 

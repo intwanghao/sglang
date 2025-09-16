@@ -16,7 +16,7 @@ from sglang.srt.utils import is_cuda, print_info_once
 _is_cuda = is_cuda()
 
 if _is_cuda:
-    from sgl_kernel.flash_attn import flash_attn_varlen_func
+    from sgl_kernel_sycl.flash_attn import flash_attn_varlen_func
 
 from sglang.srt.distributed import parallel_state
 from sglang.srt.distributed import utils as dist_utils

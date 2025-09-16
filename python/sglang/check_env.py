@@ -19,7 +19,7 @@ def is_cuda_v2():
 # List of packages to check versions
 PACKAGE_LIST = [
     "sglang",
-    "sgl_kernel",
+    "sgl_kernel_sycl",
     "flashinfer_python",
     "triton",
     "transformers",

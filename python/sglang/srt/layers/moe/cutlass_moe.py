@@ -13,8 +13,8 @@ from sglang.srt.utils import is_cuda
 
 _is_cuda = is_cuda()
 if _is_cuda:
-    import sgl_kernel
-    from sgl_kernel import (
+    import sgl_kernel_sycl
+    from sgl_kernel_sycl import (
         apply_shuffle_mul_sum,
         cutlass_fp4_group_mm,
         fp8_blockwise_scaled_grouped_mm,

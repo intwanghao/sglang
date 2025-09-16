@@ -11,11 +11,12 @@ import torch.distributed as dist
 from torch.distributed import ProcessGroup, ReduceOp
 
 from sglang.srt import _custom_ops as ops
-from sglang.srt.utils import is_cuda, is_hip
+from sglang.srt.utils import is_cuda, is_hip, is_xpu
 
 logger = logging.getLogger(__name__)
 
 _is_cuda = is_cuda()
+_is_xpu = is_xpu()
 _is_hip = is_hip()
 
 mscclpp_is_available = False
@@ -29,7 +30,13 @@ if _is_cuda:
         mscclpp_is_available = True
     except:
         mscclpp_is_available = False
+if _is_xpu:
+    try:
+        import sgl_kernel_sycl
 
+        mscclpp_is_available = True
+    except:
+        mscclpp_is_available = False
 
 class MscclContextSelection(IntEnum):
     MSCCL1SHOT1NODELL = 1
@@ -90,7 +97,10 @@ def mscclpp_bench_time(func, test_niter: int = 10, warmup_niter: int = 2):
         func()
     start_event = torch.cuda.Event(enable_timing=True)
     end_event = torch.cuda.Event(enable_timing=True)
-    torch.cuda.synchronize()
+    if _is_xpu:
+        torch.xpu.synchronize()
+    else:
+        torch.cuda.synchronize()
     dist.barrier()
     start_event.record()
     for _ in range(test_niter):

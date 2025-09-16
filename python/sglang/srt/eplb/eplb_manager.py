@@ -6,12 +6,13 @@ import torch.cuda
 
 from sglang.srt.eplb.expert_distribution import get_global_expert_distribution_recorder
 from sglang.srt.eplb.expert_location import ExpertLocationMetadata
-
+from sglang.srt.utils import is_cuda, is_hip, is_xpu
 if TYPE_CHECKING:
     from sglang.srt.model_executor.model_runner import ModelRunner
 
 logger = logging.getLogger(__name__)
-
+_is_cuda = is_cuda()
+_is_xpu = is_xpu()
 
 class EPLBManager:
     def __init__(self, model_runner: "ModelRunner"):
@@ -55,7 +56,10 @@ class EPLBManager:
         enable_timing = self._rebalance_layers_per_chunk is None
 
         if enable_timing:
-            torch.cuda.synchronize()
+            if _is_xpu:
+                torch.xpu.synchronize()
+            else:
+                torch.cuda.synchronize()
             time_start = time.time()
 
         logical_count = get_global_expert_distribution_recorder().dump_record(
@@ -76,7 +80,10 @@ class EPLBManager:
 
         msg = f"[EPLBManager] rebalance end"
         if enable_timing:
-            torch.cuda.synchronize()
+            if _is_xpu:
+                torch.xpu.synchronize()
+            else:
+                torch.cuda.synchronize()
             time_end = time.time()
             msg += f" time={time_end - time_start:.3f}s"
         logger.info(msg)

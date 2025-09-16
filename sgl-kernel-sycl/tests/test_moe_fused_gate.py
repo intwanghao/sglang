@@ -2,7 +2,7 @@ import pytest
 import torch
 from sgl_kernel_sycl import moe_fused_gate
 
-#from sglang.srt.layers.moe.topk import biased_grouped_topk
+from sglang.srt.layers.moe.topk import biased_grouped_topk
 
 
 @pytest.mark.parametrize(
@@ -16,8 +16,8 @@ from sgl_kernel_sycl import moe_fused_gate
     "params",
     [
         (128, 4, 2, 4),
-        #(256, 8, 4, 8),  # deepseek v3
-        #(512, 16, 8, 16),
+        (256, 8, 4, 8),  # deepseek v3
+        (512, 16, 8, 16),
     ],
 )
 @pytest.mark.parametrize("num_fused_shared_experts", [0, 1, 2])
@@ -45,7 +45,7 @@ def test_moe_fused_gate_combined(seq_length, dtype, params, num_fused_shared_exp
         num_fused_shared_experts=num_fused_shared_experts,
         routed_scaling_factor=2.5,
     )
-    return
+    #return
     ref_output, ref_indices = biased_grouped_topk(
         scores,
         scores,

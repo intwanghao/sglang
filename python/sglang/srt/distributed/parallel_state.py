@@ -444,7 +444,7 @@ class GroupCoordinator:
 
         if input_.is_cpu:
             if is_shm_available(input_.dtype, self.world_size, self.local_size):
-                torch.ops.sgl_kernel.shm_allreduce(
+                torch.ops.sgl_kernel_sycl.shm_allreduce(
                     input_, torch.distributed.ReduceOp.SUM
                 )
             else:
@@ -579,7 +579,7 @@ class GroupCoordinator:
 
         if input_.is_cpu:
             if is_shm_available(input_.dtype, self.world_size, self.local_size):
-                return torch.ops.sgl_kernel.shm_allgather(input_, dim)
+                return torch.ops.sgl_kernel_sycl.shm_allgather(input_, dim)
             else:
                 torch.distributed.all_gather_into_tensor(
                     output_tensor, input_, group=self.device_group

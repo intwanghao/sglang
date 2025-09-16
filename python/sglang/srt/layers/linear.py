@@ -188,7 +188,7 @@ class UnquantizedLinearMethod(LinearMethodBase):
     ) -> torch.Tensor:
 
         if use_intel_amx_backend(layer):
-            return torch.ops.sgl_kernel.weight_packed_linear(
+            return torch.ops.sgl_kernel_sycl.weight_packed_linear(
                 x, layer.weight, bias, True  # is_vnni
             )
 

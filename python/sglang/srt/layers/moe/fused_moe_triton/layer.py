@@ -33,7 +33,7 @@ from sglang.srt.utils import (
 
 has_triton_kernels = importlib.util.find_spec("triton_kernels") is not None
 
-if torch.cuda.is_available():
+if torch.cuda.is_available() or torch.xpu.is_available():
     from sglang.srt.layers.moe.fused_moe_triton.fused_moe import fused_experts
 
     if has_triton_kernels:

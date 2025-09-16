@@ -12,7 +12,7 @@ from sglang.srt.utils import get_device_name, is_cuda
 
 _is_cuda = is_cuda()
 if _is_cuda:
-    from sgl_kernel import sgl_per_token_group_quant_int8
+    from sgl_kernel_sycl import sgl_per_token_group_quant_int8
 
 logger = logging.getLogger(__name__)
 

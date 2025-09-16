@@ -3,7 +3,7 @@
 from typing import Optional
 
 import torch
-from sgl_kernel import (
+from sgl_kernel_sycl import (
     cutlass_w4a8_moe_mm,
     get_cutlass_w4a8_moe_mm_data,
     sgl_per_tensor_quant_fp8,

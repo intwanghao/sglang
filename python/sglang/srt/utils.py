@@ -201,10 +201,10 @@ def support_triton(backend: str) -> bool:
 
 
 try:
-    import sgl_kernel
+    import sgl_kernel_sycl
 
     is_intel_amx_backend_available = hasattr(
-        torch.ops.sgl_kernel, "convert_weight_packed"
+        torch.ops.sgl_kernel_sycl, "convert_weight_packed"
     )
 except:
     is_intel_amx_backend_available = False
@@ -316,7 +316,10 @@ def mark_start(name, interval=0.1, color=0, indent=0):
     global time_infos, show_time_cost
     if not show_time_cost:
         return
-    torch.cuda.synchronize()
+    if is_xpu():
+        torch.xpu.synchronize()
+    else:    
+        torch.cuda.synchronize()
     if time_infos.get(name, None) is None:
         time_infos[name] = TimeInfo(name, interval, color, indent)
     time_infos[name].acc_time -= time.perf_counter()
@@ -326,7 +329,10 @@ def mark_end(name):
     global time_infos, show_time_cost
     if not show_time_cost:
         return
-    torch.cuda.synchronize()
+    if is_xpu():
+        torch.xpu.synchronize()
+    else:    
+        torch.cuda.synchronize()
     time_infos[name].acc_time += time.perf_counter()
     if time_infos[name].check():
         time_infos[name].pretty_print()
@@ -335,11 +341,17 @@ def mark_end(name):
 def calculate_time(show=False, min_cost_ms=0.0):
     def wrapper(func):
         def inner_func(*args, **kwargs):
-            torch.cuda.synchronize()
+            if is_xpu():
+                torch.xpu.synchronize()
+            else:    
+                torch.cuda.synchronize()
             if show:
                 start_time = time.perf_counter()
             result = func(*args, **kwargs)
-            torch.cuda.synchronize()
+            if is_xpu():
+                torch.xpu.synchronize()
+            else:    
+                torch.cuda.synchronize()
             if show:
                 cost_time = (time.perf_counter() - start_time) * 1000
                 if cost_time > min_cost_ms:
@@ -1762,6 +1774,7 @@ def direct_register_custom_op(
     my_lib = target_lib or sglang_lib
     my_lib.define(op_name + schema_str)
     my_lib.impl(op_name, op_func, "CUDA")
+    my_lib.impl(op_name, op_func, "XPU")
     if fake_impl is not None:
         my_lib._register_fake(op_name, fake_impl)
 
@@ -2532,7 +2545,7 @@ def prepack_weight_if_needed(weight):
     if not cpu_has_amx_support():
         return weight
 
-    return torch.ops.sgl_kernel.convert_weight_packed(weight)
+    return torch.ops.sgl_kernel_sycl.convert_weight_packed(weight)
 
 
 # TODO: currently gemm kernel has the below requirements:

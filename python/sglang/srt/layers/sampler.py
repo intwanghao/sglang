@@ -13,7 +13,7 @@ from sglang.srt.sampling.sampling_batch_info import SamplingBatchInfo
 from sglang.srt.utils import crash_on_warnings, get_bool_env_var, is_cuda
 
 if is_cuda():
-    from sgl_kernel import (
+    from sgl_kernel_sycl import (
         min_p_sampling_from_probs,
         top_k_renorm_prob,
         top_k_top_p_sampling_from_probs,

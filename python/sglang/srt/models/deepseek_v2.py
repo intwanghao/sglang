@@ -102,6 +102,7 @@ from sglang.srt.utils import (
     get_int_env_var,
     is_cpu,
     is_cuda,
+    is_xpu,
     is_flashinfer_available,
     is_hip,
     is_non_idle_and_non_empty,
@@ -111,6 +112,7 @@ from sglang.srt.utils import (
 
 _is_hip = is_hip()
 _is_cuda = is_cuda()
+_is_xpu = is_xpu()
 _is_fp8_fnuz = is_fp8_fnuz()
 _use_aiter = get_bool_env_var("SGLANG_USE_AITER") and _is_hip
 _is_cpu_amx_available = cpu_has_amx_support()
@@ -119,6 +121,14 @@ _device_sm = get_device_sm()
 
 if _is_cuda:
     from sgl_kernel import (
+        awq_dequantize,
+        bmm_fp8,
+        dsv3_fused_a_gemm,
+        dsv3_router_gemm,
+        merge_state_v2,
+    )
+elif _is_xpu:
+    from sgl_kernel_sycl import (
         awq_dequantize,
         bmm_fp8,
         dsv3_fused_a_gemm,
@@ -267,7 +277,8 @@ class DeepseekV2MoE(nn.Module):
         layer_id: int,
         quant_config: Optional[QuantizationConfig] = None,
         prefix: str = "",
-        alt_stream: Optional[torch.cuda.Stream] = None,
+        #alt_stream: Optional[torch.cuda.Stream] = None,
+        alt_stream: Optional[torch.xpu.Stream] = None,
         is_nextn: bool = False,
     ):
         super().__init__()
@@ -439,17 +450,19 @@ class DeepseekV2MoE(nn.Module):
         self, hidden_states: torch.Tensor, can_fuse_mlp_allreduce: bool = False
     ) -> torch.Tensor:
 
-        current_stream = torch.cuda.current_stream()
+        #current_stream = torch.cuda.current_stream()
+        current_stream = torch.xpu.current_stream()
         self.alt_stream.wait_stream(current_stream)
         shared_output = self._forward_shared_experts(hidden_states)
 
-        with torch.cuda.stream(self.alt_stream):
+        with torch.xpu.stream(self.alt_stream):
+        #with torch.cuda.stream(self.alt_stream):
             # router_logits: (num_tokens, n_experts)
             router_logits = self.gate(hidden_states)
             final_hidden_states = self.experts(
                 hidden_states=hidden_states, router_logits=router_logits
             )
-            if not _is_cuda:
+            if not (_is_cuda or _is_xpu):
                 final_hidden_states *= self.routed_scaling_factor
         current_stream.wait_stream(self.alt_stream)
         final_hidden_states += shared_output
@@ -471,7 +484,7 @@ class DeepseekV2MoE(nn.Module):
         final_hidden_states = self.experts(
             hidden_states=hidden_states, router_logits=router_logits
         )
-        if not _is_cuda and not _use_aiter:
+        if not (_is_cuda or _is_xpu) and not _use_aiter:
             # fused in biased_grouped_topk so we can skip here
             final_hidden_states *= self.routed_scaling_factor
         if shared_output is not None:
@@ -766,7 +779,8 @@ class DeepseekV2AttentionMLA(nn.Module):
         reduce_results: bool = True,
         layer_id: int = None,
         prefix: str = "",
-        alt_stream: Optional[torch.cuda.Stream] = None,
+        #alt_stream: Optional[torch.cuda.Stream] = None,
+        alt_stream: Optional[torch.xpu.Stream] = None,
     ) -> None:
         super().__init__()
         self.layer_id = layer_id
@@ -1205,10 +1219,12 @@ class DeepseekV2AttentionMLA(nn.Module):
 
             # overlap qk norm
             if self.alt_stream is not None and get_is_capture_mode():
-                current_stream = torch.cuda.current_stream()
+                #current_stream = torch.cuda.current_stream()
+                current_stream = torch.xpu.current_stream()
                 self.alt_stream.wait_stream(current_stream)
                 q = self.q_a_layernorm(q)
-                with torch.cuda.stream(self.alt_stream):
+                #with torch.cuda.stream(self.alt_stream):
+                with torch.xpu.stream(self.alt_stream):
                     k_nope = self.kv_a_layernorm(k_nope)
                 current_stream.wait_stream(self.alt_stream)
             else:
@@ -1750,7 +1766,8 @@ class DeepseekV2DecoderLayer(nn.Module):
         quant_config: Optional[QuantizationConfig] = None,
         is_nextn: bool = False,
         prefix: str = "",
-        alt_stream: Optional[torch.cuda.Stream] = None,
+        #alt_stream: Optional[torch.cuda.Stream] = None,
+        alt_stream: Optional[torch.xpu.Stream] = None,
     ) -> None:
         super().__init__()
         self.hidden_size = config.hidden_size
@@ -1990,7 +2007,8 @@ class DeepseekV2Model(nn.Module):
             config.hidden_size,
             enable_tp=not global_server_args_dict["enable_dp_attention"],
         )
-        self.alt_stream = torch.cuda.Stream() if _is_cuda else None
+        #self.alt_stream = torch.cuda.Stream() if (_is_cuda) else None
+        self.alt_stream = torch.xpu.Stream() if ( _is_xpu) else None
         self.layers = nn.ModuleList(
             [
                 DeepseekV2DecoderLayer(
@@ -2175,7 +2193,7 @@ class DeepseekV2ForCausalLM(nn.Module):
             )
             if hasattr(self_attn.kv_b_proj, "qweight"):
                 # AWQ compatible
-                if _is_cuda:
+                if _is_cuda or _is_xpu:
                     w = awq_dequantize(
                         self_attn.kv_b_proj.qweight,
                         self_attn.kv_b_proj.scales,
@@ -2218,7 +2236,7 @@ class DeepseekV2ForCausalLM(nn.Module):
                         weight_scale = self_attn.kv_b_proj.weight_scale_inv
 
                     if (
-                        _is_cuda
+                        (_is_cuda or _is_xpu)
                         and weight_block_size[0] == 128
                         and weight_block_size[1] == 128
                     ):
@@ -2616,8 +2634,12 @@ class DeepseekV2ForCausalLM(nn.Module):
         del self.lm_head.weight
         self.model.embed_tokens.weight = embed
         self.lm_head.weight = head
-        torch.cuda.empty_cache()
-        torch.cuda.synchronize()
+        if _is_xpu:
+            torch.xpu.empty_cache()
+            torch.xpu.synchronize()
+        else:
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
 
     @classmethod
     def get_model_config_for_expert_location(cls, config):

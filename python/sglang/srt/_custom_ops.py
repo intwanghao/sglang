@@ -20,7 +20,7 @@ if not is_hpu():
             logger.warning("Failed to import from vllm._C with %r", e)
     else:
         try:
-            import sgl_kernel
+            import sgl_kernel_sycl
         except ImportError as e:
             logger.warning("Failed to import from custom_ar with %r", e)
 
@@ -29,7 +29,7 @@ if not is_hip() and not is_npu():
     if use_vllm_custom_allreduce:
         custom_op = torch.ops._C_custom_ar
     else:
-        custom_op = sgl_kernel.allreduce
+        custom_op = sgl_kernel_sycl.allreduce
 
     # custom allreduce
     def init_custom_ar(
@@ -77,46 +77,46 @@ else:
         rank: int,
         full_nvlink: bool,
     ) -> int:
-        return sgl_kernel.allreduce.init_custom_ar(
+        return sgl_kernel_sycl.allreduce.init_custom_ar(
             meta, rank_data, handles, offsets, rank, full_nvlink
         )
 
     def all_reduce_reg(fa: int, inp: torch.Tensor, out: torch.Tensor) -> None:
-        sgl_kernel.allreduce.all_reduce_reg(fa, inp, out)
+        sgl_kernel_sycl.allreduce.all_reduce_reg(fa, inp, out)
 
     def all_reduce_unreg(
         fa: int, inp: torch.Tensor, reg_buffer: torch.Tensor, out: torch.Tensor
     ) -> None:
-        sgl_kernel.allreduce.all_reduce_unreg(fa, inp, reg_buffer, out)
+        sgl_kernel_sycl.allreduce.all_reduce_unreg(fa, inp, reg_buffer, out)
 
     def dispose(fa: int) -> None:
-        sgl_kernel.allreduce.dispose(fa)
+        sgl_kernel_sycl.allreduce.dispose(fa)
 
     def meta_size() -> int:
-        return sgl_kernel.allreduce.meta_size()
+        return sgl_kernel_sycl.allreduce.meta_size()
 
     def register_buffer(
         fa: int, t: torch.Tensor, handles: List[str], offsets: List[int]
     ) -> None:
-        return sgl_kernel.allreduce.register_buffer(fa, t, handles, offsets)
+        return sgl_kernel_sycl.allreduce.register_buffer(fa, t, handles, offsets)
 
     def get_graph_buffer_ipc_meta(fa: int) -> Tuple[torch.Tensor, List[int]]:
-        return sgl_kernel.allreduce.get_graph_buffer_ipc_meta(fa)
+        return sgl_kernel_sycl.allreduce.get_graph_buffer_ipc_meta(fa)
 
     def register_graph_buffers(
         fa: int, handles: List[str], offsets: List[List[int]]
     ) -> None:
-        sgl_kernel.allreduce.register_graph_buffers(fa, handles, offsets)
+        sgl_kernel_sycl.allreduce.register_graph_buffers(fa, handles, offsets)
 
     def allocate_meta_buffer(size: int) -> torch.Tensor:
-        return sgl_kernel.allreduce.allocate_meta_buffer(size)
+        return sgl_kernel_sycl.allreduce.allocate_meta_buffer(size)
 
     def get_meta_buffer_ipc_handle(inp: torch.Tensor) -> torch.Tensor:
-        return sgl_kernel.allreduce.get_meta_buffer_ipc_handle(inp)
+        return sgl_kernel_sycl.allreduce.get_meta_buffer_ipc_handle(inp)
 
 
 def mscclpp_generate_unique_id() -> bytes:
-    return sgl_kernel.allreduce.mscclpp_generate_unique_id()
+    return sgl_kernel_sycl.allreduce.mscclpp_generate_unique_id()
 
 
 def mscclpp_init_context(
@@ -130,7 +130,7 @@ def mscclpp_init_context(
     rank_to_ib: List[int],
     context_selection: int,
 ) -> int:
-    return sgl_kernel.allreduce.mscclpp_init_context(
+    return sgl_kernel_sycl.allreduce.mscclpp_init_context(
         unique_id,
         rank,
         world_size,
@@ -146,4 +146,4 @@ def mscclpp_init_context(
 def mscclpp_allreduce(
     context: int, inp: torch.Tensor, out: torch.Tensor, nthreads: int, nblocks: int
 ) -> None:
-    return sgl_kernel.allreduce.mscclpp_allreduce(context, inp, out, nthreads, nblocks)
+    return sgl_kernel_sycl.allreduce.mscclpp_allreduce(context, inp, out, nthreads, nblocks)

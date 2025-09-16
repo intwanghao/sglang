@@ -110,7 +110,7 @@ if (thread_row < num_rows) {
   }
 }
 
-  sycl::group_barrier(item_ct1.get_group());
+  item_ct1.barrier();
 if (thread_row < num_rows) {
 ////////////////////// Sigmoid //////////////////////
 #pragma unroll
@@ -123,7 +123,7 @@ if (thread_row < num_rows) {
   sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to global
   memory.
   */
-  sycl::group_barrier(item_ct1.get_group());
+  item_ct1.barrier();
 if (thread_row < num_rows) {
 ////////////////////// Add Bias //////////////////////
 #pragma unroll
@@ -159,23 +159,13 @@ if (thread_row < num_rows) {
 #pragma unroll
     for (int mask = params.THREADS_PER_ROW / 2; mask > 0; mask /= 2) {
       T other_max_sum =
-          /*
-          DPCT1108:630: '__shfl_xor_sync' was migrated with the experimental feature masked sub_group function which may
-          not be supported by all compilers or runtimes. You may need to adjust the code.
-          */
-          static_cast<T>(dpct::experimental::permute_sub_group_by_xor(
-              0xFFFFFFFF,
+          static_cast<T>(dpct::permute_sub_group_by_xor(
               sycl::ext::oneapi::this_work_item::get_sub_group(),
               static_cast<float>(max_sum),
               mask,
               params.THREADS_PER_ROW));
-      /*
-      DPCT1108:631: '__shfl_xor_sync' was migrated with the experimental feature masked sub_group function which may not
-      be supported by all compilers or runtimes. You may need to adjust the code.
-      */
-      int other_expert = dpct::experimental::permute_sub_group_by_xor(
-          0xFFFFFFFF, sycl::ext::oneapi::this_work_item::get_sub_group(), expert, mask, params.THREADS_PER_ROW);
-
+      int other_expert = dpct::permute_sub_group_by_xor(
+         sycl::ext::oneapi::this_work_item::get_sub_group(), expert, mask, params.THREADS_PER_ROW);
       // higher indices win
       if (cmp_gt(max_sum, other_max_sum) || (cmp_eq(other_max_sum, max_sum) && other_expert > expert)) {
         max_sum = other_max_sum;
@@ -201,13 +191,13 @@ if (thread_row < num_rows) {
   sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to global
   memory.
   */
-  sycl::group_barrier(item_ct1.get_group());
+  item_ct1.barrier();
 // can pass
 
   ////////////////////// Topk //////////////////////
   float output_sum = 0.0f;
-  //for (int k_idx = 0; k_idx < topk_excluding_share_expert_fusion; ++k_idx) {
-  for (int k_idx = 0; k_idx < 0; ++k_idx) {
+  for (int k_idx = 0; k_idx < topk_excluding_share_expert_fusion; ++k_idx) {
+  //for (int k_idx = 0; k_idx < 0; ++k_idx) {
     if (thread_row < num_rows) {
     // local argmax
     T max_val = bias_chunk[0];
@@ -230,23 +220,13 @@ if (thread_row < num_rows) {
 #pragma unroll
     for (int mask = params.THREADS_PER_ROW / 2; mask > 0; mask /= 2) {
       T other_max =
-          /*
-          DPCT1108:632: '__shfl_xor_sync' was migrated with the experimental feature masked sub_group function which may
-          not be supported by all compilers or runtimes. You may need to adjust the code.
-          */
-          static_cast<T>(dpct::experimental::permute_sub_group_by_xor(
-              0xFFFFFFFF,
+          static_cast<T>(dpct::permute_sub_group_by_xor(
               sycl::ext::oneapi::this_work_item::get_sub_group(),
               static_cast<float>(max_val),
               mask,
               params.THREADS_PER_ROW));
-      /*
-      DPCT1108:633: '__shfl_xor_sync' was migrated with the experimental feature masked sub_group function which may not
-      be supported by all compilers or runtimes. You may need to adjust the code.
-      */
-      int other_expert = dpct::experimental::permute_sub_group_by_xor(
-          0xFFFFFFFF, sycl::ext::oneapi::this_work_item::get_sub_group(), expert, mask, params.THREADS_PER_ROW);
-
+      int other_expert = dpct::permute_sub_group_by_xor(
+          sycl::ext::oneapi::this_work_item::get_sub_group(), expert, mask, params.THREADS_PER_ROW);
       // lower indices to win
       if (cmp_gt(other_max, max_val) || (cmp_eq(other_max, max_val) && other_expert < expert)) {
         max_val = other_max;
@@ -272,18 +252,8 @@ if (thread_row < num_rows) {
     if (thread_group_idx == 0) {
       output_sum += output_ptr[idx];
     }
-
-    /*
-    DPCT1118:629: SYCL group functions and algorithms must be encountered in converged control flow. You may need to
-    adjust the code.
-    */
-    /*
-    DPCT1065:793: Consider replacing sycl::nd_item::barrier() with
-    sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to
-    global memory.
-    */
     }
-    sycl::group_barrier(item_ct1.get_group());
+    item_ct1.barrier();
   }
   
 if (thread_row < num_rows) {
@@ -306,12 +276,7 @@ if (thread_row < num_rows) {
     }
   }
 }
-  /*
-  DPCT1065:792: Consider replacing sycl::nd_item::barrier() with
-  sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better performance if there is no access to global
-  memory.
-  */
-  sycl::group_barrier(item_ct1.get_group());
+  item_ct1.barrier();
 if (thread_row < num_rows) {
   ////////////////////// Rescale Output //////////////////////
   if (thread_group_idx == 0) {
@@ -480,12 +445,12 @@ std::vector<at::Tensor> moe_fused_gate(
     double routed_scaling_factor) {
   int64_t num_rows = input.size(0);
   int32_t num_experts = input.size(1);
-  auto options_cpu = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCPU);
-  auto output_cpu = torch::empty({num_rows, topk}, options_cpu);
-  auto indices_cpu = torch::empty({num_rows, topk}, options_cpu.dtype(torch::kInt32));
+  auto options_cpu = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kXPU);
+  auto output = torch::empty({num_rows, topk}, options_cpu);
+  auto indices = torch::empty({num_rows, topk}, options_cpu.dtype(torch::kInt32));
 
-  auto output = output_cpu.to(torch::kXPU);
-  auto indices = indices_cpu.to(torch::kXPU);
+  //auto output = output_cpu.to(torch::kXPU);
+  //auto indices = indices_cpu.to(torch::kXPU);
   
   // Compute grid dimensions based on runtime value for num_expert_group.
   int64_t rows_per_warp = std::max<int64_t>(1, WARP_SIZE / num_expert_group);

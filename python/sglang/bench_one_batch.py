@@ -76,7 +76,8 @@ from sglang.srt.utils import (
     set_gpu_proc_affinity,
     suppress_other_loggers,
 )
-
+import faulthandler
+faulthandler.enable()
 
 @dataclasses.dataclass
 class BenchArgs:
@@ -280,6 +281,24 @@ def _maybe_prepare_mlp_sync_batch(batch: ScheduleBatch, model_runner):
             disable_overlap_schedule=model_runner.server_args.disable_overlap_schedule,
         )
 
+import random
+
+def nan_check_hook(module, input, output):
+    if torch.is_tensor(input):
+        if torch.isnan(input).any() or torch.isinf(input).any():
+            raise RuntimeError(f"[NaN/Inf detected input] in {module.__class__.__name__}")
+    elif isinstance(input, (tuple, list)):
+        for i, o in enumerate(input):
+            if torch.is_tensor(o) and (torch.isnan(o).any() or torch.isinf(o).any()):
+                raise RuntimeError(f"[NaN/Inf detected input] in {module.__class__.__name__}[{i}]")
+
+    if torch.is_tensor(output):
+        if torch.isnan(output).any() or torch.isinf(output).any():
+            raise RuntimeError(f"[NaN/Inf detected output] in {module.__class__.__name__}")
+    elif isinstance(output, (tuple, list)):
+        for i, o in enumerate(output):
+            if torch.is_tensor(o) and (torch.isnan(o).any() or torch.isinf(o).any()):
+                raise RuntimeError(f"[NaN/Inf detected output] in {module.__class__.__name__}[{i}]")
 
 def correctness_test(
     server_args,
@@ -293,7 +312,31 @@ def correctness_test(
 
     # Load the model
     model_runner, tokenizer = load_model(server_args, port_args, tp_rank)
-
+    if tp_rank == -1:
+        params = list(model_runner.model.named_parameters())
+        # 随机抽 5 个参数（如果参数数量少于 5，就全打印）
+        sample_params = random.sample(params, min(5, len(params)))
+    
+        for name, param in sample_params:
+            if param.numel() == 0:
+                rank_print(f"[SKIP] {name} is empty tensor, shape={tuple(param.shape)}")
+                continue
+    
+            with torch.no_grad():
+                min_val = param.min().item()
+                max_val = param.max().item()
+                mean_val = param.mean().item()
+                rank_print(f"[CHECK] {name}: shape={tuple(param.shape)}, "
+                           f"min={min_val:.4e}, max={max_val:.4e}, mean={mean_val:.4e}")
+    
+                if torch.isnan(param).any():
+                    rank_print(f"[WARN] NaN detected in {name}")
+                if torch.isinf(param).any():
+                    rank_print(f"[WARN] Inf detected in {name}")
+    
+        rank_print("✅ Parameter spot-check finished")
+    #for name, module in model_runner.model.named_modules():
+    #    module.register_forward_hook(nan_check_hook)
     # Prepare inputs
     input_ids, reqs = prepare_inputs_for_correctness_test(bench_args, tokenizer)
     rank_print(f"\n{input_ids=}\n")

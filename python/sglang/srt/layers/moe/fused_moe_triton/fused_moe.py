@@ -32,6 +32,7 @@ from sglang.srt.utils import (
     is_cpu,
     is_cuda,
     is_hip,
+    is_xpu,
     next_power_of_2,
 )
 
@@ -39,9 +40,12 @@ _is_hip = is_hip()
 _is_cuda = is_cuda()
 _is_cpu_amx_available = cpu_has_amx_support()
 _is_cpu = is_cpu()
+_is_xpu = is_xpu()
 
 if _is_cuda:
     from sgl_kernel import gelu_and_mul, silu_and_mul
+if _is_xpu:
+    from sgl_kernel_sycl import gelu_and_mul, silu_and_mul
 elif _is_cpu and _is_cpu_amx_available:
     pass
 else:
@@ -50,6 +54,9 @@ else:
 
 if _is_cuda or _is_hip:
     from sgl_kernel import moe_align_block_size as sgl_moe_align_block_size
+if _is_xpu:
+    from sgl_kernel_sycl import moe_align_block_size as sgl_moe_align_block_size
+
 
 
 logger = logging.getLogger(__name__)
@@ -832,7 +839,7 @@ def invoke_fused_moe_kernel(
             # activation block-wise fp8 quantization
             assert len(block_shape) == 2
             block_n, block_k = block_shape[0], block_shape[1]
-            if _is_cuda:
+            if _is_cuda or _is_xpu:
                 A, A_scale = sglang_per_token_group_quant_fp8(A, block_k)
             else:
                 A, A_scale = per_token_group_quant_fp8(A, block_k)
@@ -851,7 +858,7 @@ def invoke_fused_moe_kernel(
             # activation block-wise int8 quantization
             assert len(block_shape) == 2
             block_n, block_k = block_shape[0], block_shape[1]
-            if _is_cuda:
+            if _is_cuda or _is_xpu:
                 A, A_scale = sglang_per_token_group_quant_int8(A, block_k)
             else:
                 A, A_scale = per_token_group_quant_int8(A, block_k)
@@ -1647,14 +1654,14 @@ def fused_experts_impl(
             block_shape=block_shape,
         )
         if activation == "silu":
-            if _is_cuda:
+            if _is_cuda or _is_xpu:
                 silu_and_mul(intermediate_cache1.view(-1, N), intermediate_cache2)
             else:
                 vllm_ops.silu_and_mul(
                     intermediate_cache2, intermediate_cache1.view(-1, N)
                 )
         elif activation == "gelu":
-            if _is_cuda:
+            if _is_cuda or _is_xpu:
                 gelu_and_mul(intermediate_cache1.view(-1, N), intermediate_cache2)
             else:
                 vllm_ops.gelu_and_mul(
@@ -1696,7 +1703,7 @@ def fused_experts_impl(
 
         if no_combine:
             pass
-        elif _is_cuda:
+        elif _is_cuda or _is_xpu:
             if topk_ids.shape[1] == 1 and routed_scaling_factor == 1.0:
                 pass  # we write directly into out_hidden_states
             elif topk_ids.shape[1] == 2 and routed_scaling_factor == 1.0:

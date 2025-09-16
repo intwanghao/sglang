@@ -33,7 +33,7 @@ from sglang.srt.layers.radix_attention import RadixAttention
 from sglang.srt.utils import is_cuda, next_power_of_2
 
 if is_cuda():
-    from sgl_kernel import cutlass_scaled_fp4_mm, scaled_fp4_quant
+    from sgl_kernel_sycl import cutlass_scaled_fp4_mm, scaled_fp4_quant
 
 try:
     from flashinfer import fp4_quantize as fp4_quantize

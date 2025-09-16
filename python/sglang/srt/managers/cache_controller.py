@@ -20,6 +20,9 @@ from queue import Empty, Full, PriorityQueue, Queue
 from typing import TYPE_CHECKING, List, Optional
 
 import torch
+from sglang.srt.utils import is_xpu
+
+_is_xpu = is_xpu()
 
 if TYPE_CHECKING:
     from sglang.srt.mem_cache.allocator import BaseTokenToKVPoolAllocator
@@ -275,7 +278,10 @@ class HiCacheController:
             return None
         self.mem_pool_host.protect_load(host_indices)
         # to ensure the device indices are ready before accessed by another CUDA stream
-        torch.cuda.current_stream().synchronize()
+        if _is_xpu:
+            torch.xpu.current_stream().synchronize()
+        else:
+            torch.cuda.current_stream().synchronize()
         self.load_queue.put(
             CacheOperation(host_indices, device_indices, node_id, priority)
         )

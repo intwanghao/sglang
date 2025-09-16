@@ -41,7 +41,7 @@ _is_cuda = is_cuda()
 _is_cpu = is_cpu()
 
 if _is_cuda:
-    from sgl_kernel import (
+    from sgl_kernel_sycl import (
         sgl_per_tensor_quant_fp8,
         sgl_per_token_group_quant_fp8,
         sgl_per_token_quant_fp8,

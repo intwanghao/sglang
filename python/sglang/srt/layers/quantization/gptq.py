@@ -46,7 +46,7 @@ from sglang.srt.utils import is_cuda
 _is_cuda = is_cuda()
 
 if _is_cuda:
-    from sgl_kernel import fused_marlin_moe
+    from sgl_kernel_sycl import fused_marlin_moe
 
 
 FusedMoEMethodBase = QuantizeMethodBase
@@ -77,7 +77,7 @@ def gptq_marlin_moe_repack(
         dtype=b_q_weight.dtype,
     )
     for e in range(num_experts):
-        output[e] = torch.ops.sgl_kernel.gptq_marlin_repack(
+        output[e] = torch.ops.sgl_kernel_sycl.gptq_marlin_repack(
             b_q_weight[e], perm[e], size_k, size_n, num_bits
         )
     return output
@@ -719,7 +719,7 @@ class GPTQMarlinLinearMethod(LinearMethodBase):
         def transform_w_q(x):
             assert isinstance(x, BasevLLMParameter)
             permute_param_layout_(x, input_dim=0, output_dim=1, packed_dim=0)
-            x.data = torch.ops.sgl_kernel.gptq_marlin_repack(
+            x.data = torch.ops.sgl_kernel_sycl.gptq_marlin_repack(
                 x.data.contiguous(),
                 perm=layer.g_idx_sort_indices,
                 size_k=c.partition_weight_shape[0],

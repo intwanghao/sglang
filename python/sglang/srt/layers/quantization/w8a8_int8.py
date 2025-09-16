@@ -40,7 +40,7 @@ _is_cuda = is_cuda()
 _is_cpu_amx_available = cpu_has_amx_support()
 _is_cpu = is_cpu()
 if _is_cuda:
-    from sgl_kernel import int8_scaled_mm
+    from sgl_kernel_sycl import int8_scaled_mm
 _is_npu = is_npu()
 
 if _is_npu:
@@ -358,7 +358,7 @@ class W8A8Int8LinearMethod(LinearMethodBase):
         bias: Optional[torch.Tensor] = None,
     ):
         if use_intel_amx_backend(layer):
-            return torch.ops.sgl_kernel.int8_scaled_mm_with_quant(
+            return torch.ops.sgl_kernel_sycl.int8_scaled_mm_with_quant(
                 x,
                 layer.weight,
                 layer.weight_scale,
@@ -515,7 +515,7 @@ class W8A8Int8MoEMethod:
         )
 
         if use_intel_amx_backend(layer):
-            return torch.ops.sgl_kernel.fused_experts_cpu(
+            return torch.ops.sgl_kernel_sycl.fused_experts_cpu(
                 x,
                 layer.w13_weight,
                 layer.w2_weight,

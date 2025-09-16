@@ -443,7 +443,7 @@ class LogitsProcessor(nn.Module):
 
         if hasattr(lm_head, "weight"):
             if use_intel_amx_backend(lm_head):
-                logits = torch.ops.sgl_kernel.weight_packed_linear(
+                logits = torch.ops.sgl_kernel_sycl.weight_packed_linear(
                     hidden_states.to(lm_head.weight.dtype),
                     lm_head.weight,
                     None,  # bias

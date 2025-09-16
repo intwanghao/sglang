@@ -176,10 +176,10 @@ def silu_and_mul(input: torch.Tensor, out: torch.Tensor = None) -> torch.Tensor:
     else:
         out = torch.empty(
             input.shape[:-1] + (input.shape[-1] // 2,),
-            device="cpu",
+            device=input.device,
             dtype=input.dtype,
         )
-        out = out.to("xpu")
+        #out = out.to("xpu")
     #torch.ops.sgl_kernel_sycl.silu_and_mul.default(out, input, get_cuda_stream())
     common_ops.silu_and_mul(out, input, get_cuda_stream())
     return out

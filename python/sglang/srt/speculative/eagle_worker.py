@@ -52,7 +52,7 @@ from sglang.srt.utils import (
 )
 
 if is_cuda():
-    from sgl_kernel import segment_packbits
+    from sgl_kernel_sycl import segment_packbits
 
 logger = logging.getLogger(__name__)
 

@@ -28,7 +28,7 @@ from sglang.srt.utils import is_cuda, is_hip, next_power_of_2
 logger = logging.getLogger(__name__)
 
 if is_cuda():
-    from sgl_kernel import (
+    from sgl_kernel_sycl import (
         fast_topk,
         top_k_renorm_prob,
         top_p_renorm_prob,
@@ -36,7 +36,7 @@ if is_cuda():
         verify_tree_greedy,
     )
 elif is_hip():
-    from sgl_kernel import fast_topk, verify_tree_greedy
+    from sgl_kernel_sycl import fast_topk, verify_tree_greedy
 
 
 logger = logging.getLogger(__name__)

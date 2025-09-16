@@ -456,7 +456,7 @@ class Fp8LinearMethod(LinearMethodBase):
 
         if self.block_quant:
             if use_intel_amx_backend(layer):
-                return torch.ops.sgl_kernel.fp8_scaled_mm_cpu(
+                return torch.ops.sgl_kernel_sycl.fp8_scaled_mm_cpu(
                     x,
                     layer.weight,
                     layer.weight_scale_inv,
@@ -1019,7 +1019,7 @@ class Fp8MoEMethod:
         )
 
         if use_intel_amx_backend(layer):
-            return torch.ops.sgl_kernel.fused_experts_cpu(
+            return torch.ops.sgl_kernel_sycl.fused_experts_cpu(
                 x,
                 layer.w13_weight,
                 layer.w2_weight,
